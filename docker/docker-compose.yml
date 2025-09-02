@@ -12,7 +12,7 @@ services:
     volumes:
       - project-memshelf-mariadb-data:/var/lib/mysql
     healthcheck:
-      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pmemshelf_root" ]
       interval: 10s
       timeout: 5s
       retries: 5
