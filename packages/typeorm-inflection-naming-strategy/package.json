@@ -1,0 +1,24 @@
+{
+    "name": "typeorm-inflection-naming-strategy",
+    "version": "1.0.0",
+    "description": "TypeORM naming strategy with inflection and acronym-safe snake_case conversion",
+    "private": true,
+    "type": "module",
+    "module": "src/index.ts",
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "scripts": {
+        "typecheck": "tsc --noEmit"
+    },
+    "devDependencies": {
+        "@types/bun": "^1.2.19",
+        "@repo/typescript-config": "*"
+    },
+    "peerDependencies": {
+        "typeorm": ">=0.3.0",
+        "typescript": "^5"
+    },
+    "dependencies": {
+        "inflection": "^3.0.2"
+    }
+}
