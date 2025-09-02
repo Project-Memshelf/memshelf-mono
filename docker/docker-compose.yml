@@ -1,0 +1,39 @@
+name: project-memshelf
+services:
+  mariadb:
+    image: alpine/mariadb:11.4.5
+    environment:
+      MARIADB_DATABASE: memshelf
+      MARIADB_USER: memshelf
+      MARIADB_PASSWORD: memshelf
+      MARIADB_ROOT_PASSWORD: memshelf_root
+    ports:
+      - "7379:3306"
+    volumes:
+      - project-memshelf-mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: valkey/valkey:9.0-alpine3.22
+    ports:
+      - "7380:6379"
+    volumes:
+      - project-memshelf-redis-data:/data
+    healthcheck:
+      test: [ "CMD", "valkey-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    command: valkey-server --appendonly yes
+
+volumes:
+  project-memshelf-mariadb-data:
+    driver: local
+  project-memshelf-redis-data:
+    driver: local
