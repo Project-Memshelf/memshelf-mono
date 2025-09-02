@@ -1,0 +1,9 @@
+{
+    "extends": "./tsconfig.decorators.json",
+    "compilerOptions": {
+        // Apps are end consumers, not dependencies
+        "composite": false,
+        "declaration": false,
+        "declarationMap": false
+    }
+}

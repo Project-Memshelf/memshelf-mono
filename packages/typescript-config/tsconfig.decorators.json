@@ -1,0 +1,9 @@
+{
+    "extends": "./tsconfig.packages.json",
+    "compilerOptions": {
+        // Decorator support for packages that need it (database, etc.)
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "strictPropertyInitialization": false
+    }
+}
