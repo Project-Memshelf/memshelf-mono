@@ -6,13 +6,11 @@ pre-commit:
       skip:
         - merge
         - rebase
-      glob: "*.{js,ts,tsx,jsx}"
     types:
       run: bun run typecheck
       skip:
         - merge
         - rebase
-      glob: "*.{ts,tsx}"
 commit-msg:
   parallel: true
   commands:
