@@ -27,7 +27,6 @@ bun install
 ```
 src/
 ├── createContainer.ts    # Main DI container factory
-├── LoggerRegistry.ts     # Named logger management  
 └── index.ts             # Package exports
 ```
 
@@ -69,24 +68,19 @@ await dataSource.initialize();
 await cache.set('key', 'value');
 ```
 
-### Logger Registry
+### Logger Usage
 
-The `LoggerRegistry` provides named logger instances:
+The container provides a configured logger instance:
 
 ```typescript
-import { LoggerRegistry } from '@repo/shared-services';
+import { AppLogger } from '@repo/shared-services';
 
-const loggerRegistry = container.resolve(LoggerRegistry);
+const logger = container.resolve(AppLogger);
 
-// Get named loggers
-const dbLogger = loggerRegistry.getLogger('Database');
-const apiLogger = loggerRegistry.getLogger('API');
-const jobLogger = loggerRegistry.getLogger('Jobs');
-
-// Use loggers
-dbLogger.info('Database query executed');
-apiLogger.warn('API rate limit approaching');
-jobLogger.error('Job processing failed');
+// Use logger
+logger.info('Application started');
+logger.warn('API rate limit approaching');
+logger.error('Operation failed');
 ```
 
 ## Registered Services
@@ -101,7 +95,6 @@ The container automatically registers these services:
 | Database | `DataSource` | `DataSource` | TypeORM data source |
 | Cache | `AppCache` | `TaggedKeyv` | Keyv-based caching |
 | Redis | `AppRedis` | `IORedis` | Redis connection |
-| Logger Registry | `LoggerRegistry` | `LoggerRegistry` | Named logger factory |
 
 ### Service Configuration
 
@@ -178,24 +171,27 @@ container.register<UserService>(UserService, UserService);
 const userService = container.resolve(UserService);
 ```
 
-## Logger Hierarchy
+## Logger Configuration
 
-The logger registry creates hierarchical loggers:
+The logger is configured with the application name from your config:
 
 ```typescript
-const loggerRegistry = container.resolve(LoggerRegistry);
+const config = createRepoConfig({
+    logger: {
+        name: 'MyApp',
+        options: { level: 'info' }
+    }
+});
 
-// Create loggers for different components
-const authLogger = loggerRegistry.getLogger('Auth');
-const dbLogger = loggerRegistry.getLogger('Database');
-const apiLogger = loggerRegistry.getLogger('API');
+const container = createContainer(config);
+const logger = container.resolve(AppLogger);
 
-// Each logger includes the component name in logs
-authLogger.info('User authenticated'); 
-// Output: {"level":30,"time":1234567890,"name":"Auth","msg":"User authenticated"}
+// Logger includes the application name in logs
+logger.info('User authenticated'); 
+// Output: {"level":30,"time":1234567890,"name":"MyApp","msg":"User authenticated"}
 
-dbLogger.error('Connection failed');
-// Output: {"level":50,"time":1234567890,"name":"Database","msg":"Connection failed"}
+logger.error('Connection failed');
+// Output: {"level":50,"time":1234567890,"name":"MyApp","msg":"Connection failed"}
 ```
 
 ## Advanced Usage
@@ -249,7 +245,6 @@ bun run build
 
 ### Classes
 
-- `LoggerRegistry` - Manages named logger instances
 
 ### Injection Tokens
 
