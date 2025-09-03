@@ -1,0 +1,26 @@
+{
+    "name": "@repo/shared-services",
+    "description": "Service layer orchestration with dependency injection, caching, and logging",
+    "private": true,
+    "type": "module",
+    "module": "src/index.ts",
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "scripts": {
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@keyvhq/core": "^2.1.7",
+        "@repo/shared-core": "*",
+        "ioredis": "^5.7.0",
+        "tagged-keyv-wrapper": "^1.1.0",
+        "tsyringe": "^4.10.0"
+    },
+    "devDependencies": {
+        "@types/bun": "^1.2.19",
+        "@repo/typescript-config": "*"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
+}
