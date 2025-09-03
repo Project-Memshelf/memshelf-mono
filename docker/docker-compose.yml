@@ -1,7 +1,7 @@
 name: project-memshelf
 services:
   mariadb:
-    image: alpine/mariadb:11.4.5
+    image: mariadb:11.4.5
     environment:
       MARIADB_DATABASE: memshelf
       MARIADB_USER: memshelf
