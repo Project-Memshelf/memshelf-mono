@@ -4,7 +4,7 @@ import type { AppEntity } from './AppEntity';
 import type { DbServiceInterface } from './DbServiceInterface';
 import type { QueryDeepPartialEntity } from './types';
 
-export class BaseService<T extends AppEntity> implements DbServiceInterface<T> {
+export class BaseDbService<T extends AppEntity> implements DbServiceInterface<T> {
     constructor(protected readonly repo: Repository<T>) {}
 
     protected get repository(): Repository<T> {
@@ -51,9 +51,29 @@ export class BaseService<T extends AppEntity> implements DbServiceInterface<T> {
         await this.repo.delete(id);
     }
 
-    async upsert(entity: QueryDeepPartialEntity<T>, conflictPathsOrOptions: string[]): Promise<T> {
+    async upsert(entity: QueryDeepPartialEntity<T>, conflictPathsOrOptions: string[]): Promise<void> {
         await this.repo.upsert(entity, conflictPathsOrOptions);
-        return entity as T;
+    }
+
+    async upsertAndReload(entity: QueryDeepPartialEntity<T>, conflictPathsOrOptions: string[]): Promise<T> {
+        const result = await this.repo.upsert(entity, conflictPathsOrOptions);
+
+        // TypeORM's upsert returns identifiers for affected rows
+        // For new inserts, we can use the generated identifier
+        // For updates, we need to use the original identifier from the entity
+        const identifier = result.identifiers?.[0];
+        const entityId = identifier?.id || (entity as Record<string, unknown>).id;
+
+        if (!entityId) {
+            throw new Error('Cannot reload entity after upsert: no identifier found in result or entity');
+        }
+
+        const reloadedEntity = await this.findById(entityId);
+        if (!reloadedEntity) {
+            throw new Error(`Entity with id ${entityId} not found after upsert operation`);
+        }
+
+        return reloadedEntity;
     }
 
     async softDelete(id: number | string): Promise<void> {

@@ -16,11 +16,12 @@
         "migration:revert": "bun --bun typeorm migration:revert -d src/dataSource.ts"
     },
     "dependencies": {
-        "mysql2": "^3.12.0",
         "@repo/shared-core": "*",
-        "typeorm-inflection-naming-strategy": "*",
+        "mysql2": "^3.12.0",
         "tsyringe": "^4.10.0",
         "typeorm": "^0.3.25",
+        "typeorm-inflection-naming-strategy": "*",
+        "typeorm-pino-logger": "^0.1.0",
         "zod": "^3.25.76"
     },
     "devDependencies": {
