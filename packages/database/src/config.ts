@@ -1,23 +1,27 @@
-import type { RepoConfig } from '@repo/shared-core';
+import { createBaseLogger, type RepoConfig } from '@repo/shared-core';
 import { DataSource, type DataSourceOptions } from 'typeorm';
 import { InflectionNamingStrategy } from 'typeorm-inflection-naming-strategy/src';
+import { TypeOrmPinoLogger } from 'typeorm-pino-logger';
 import { AppDataSource } from './dataSource';
 
 /**
  * Merge package default config with app-specific overrides
  */
 export function createDataSourceOptions(repoConfig: RepoConfig): DataSourceOptions {
+    const typeormLogger = new TypeOrmPinoLogger(createBaseLogger(repoConfig));
+
     return {
         type: 'mysql',
         ...repoConfig.database,
-        synchronize: false,
-        migrationsRun: false,
-        entities: [`${__dirname}/entities/*.ts`],
-        migrations: ['src/migrations/*.ts'],
-        migrationsTableName: 'typeorm_migrations',
-        namingStrategy: new InflectionNamingStrategy(),
         charset: 'utf8mb4',
         timezone: 'Z',
+        synchronize: false,
+        entities: [`${__dirname}/entities/*Entity.{ts,js}`],
+        migrations: [`${__dirname}/migrations/*.{ts,js}`],
+        migrationsTableName: 'typeorm_migrations',
+        migrationsRun: true,
+        namingStrategy: new InflectionNamingStrategy(),
+        logger: typeormLogger,
     };
 }
 
