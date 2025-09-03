@@ -22,7 +22,9 @@ export interface DbServiceInterface<T extends AppEntity> {
 
     remove(id: number | string): Promise<void>;
 
-    upsert(entity: QueryDeepPartialEntity<T>, conflictPathsOrOptions: string[]): Promise<T>;
+    upsert(entity: QueryDeepPartialEntity<T>, conflictPathsOrOptions: string[]): Promise<void>;
+
+    upsertAndReload(entity: QueryDeepPartialEntity<T>, conflictPathsOrOptions: string[]): Promise<T>;
 
     softDelete(id: number | string): Promise<void>;
 
