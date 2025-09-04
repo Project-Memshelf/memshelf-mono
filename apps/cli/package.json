@@ -1,0 +1,29 @@
+{
+    "name": "@repo/cli",
+    "version": "1.0.0",
+    "description": "Memshelf CLI application",
+    "type": "module",
+    "private": true,
+    "bin": {
+        "memshelf": "./dist/index.js"
+    },
+    "scripts": {
+        "build": "bun build src/index.ts --outdir dist --format esm --target bun",
+        "dev": "bun run src/index.ts",
+        "typecheck": "tsc --noEmit",
+        "prepublishOnly": "bun run build"
+    },
+    "dependencies": {
+        "commander": "^11.1.0",
+        "@repo/shared-core": "*",
+        "@repo/shared-services": "*",
+        "@repo/database": "*"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@repo/typescript-config": "*"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
+}
