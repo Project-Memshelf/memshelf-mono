@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import { merge } from 'ts-deepmerge';
-import type { LoggerConfig } from '../schemas/config/LoggerConfigSchema';
-import { type RepoConfig, RepoConfigSchema } from '../schemas/config/RepoConfigSchema';
+import type { LoggerConfig } from '../schemas';
+import { type RepoConfig, RepoConfigSchema } from '../schemas';
 import { type DeepPartial, NodeEnv } from '../types';
 
 dotenv.config({
@@ -19,14 +19,14 @@ const defaultConfig: DeepPartial<RepoConfig> = {
     database: {
         host: process.env.DB_HOST ?? 'localhost',
         port: Number(process.env.DB_PORT ?? 3306),
-        username: process.env.DB_USERNAME ?? 'subreddit_orphans',
-        password: process.env.DB_PASSWORD ?? 'subreddit_orphans',
-        database: process.env.DB_DATABASE ?? 'subreddit_orphans',
+        username: process.env.DB_USERNAME ?? 'db_username',
+        password: process.env.DB_PASSWORD ?? 'db_password',
+        database: process.env.DB_DATABASE ?? 'db_database',
         logging: process.env.NODE_ENV === 'development',
     },
     logger: {
         options: {
-            level: 'debug',
+            level: process.env.LOGGER_LEVEL ?? 'debug',
         },
     },
     redis: {

@@ -1,3 +1,8 @@
 {
-    "extends": "@repo/typescript-config/tsconfig.decorators.json"
+    "extends": "@repo/typescript-config/tsconfig.decorators.json",
+    "compilerOptions": {
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "strictPropertyInitialization": false
+    }
 }
