@@ -6,6 +6,7 @@ import { jobDefinitions } from './generated/jobDefinitions';
 export class WorkerService {
     protected logger: Logger;
     protected agenda: Agenda;
+    private isShuttingDown = false;
 
     constructor(agenda: Agenda, logger: Logger) {
         this.agenda = agenda;
@@ -52,6 +53,11 @@ export class WorkerService {
 
     setupGracefulShutdown(): void {
         const handleShutdown = async (signal: string) => {
+            if (this.isShuttingDown) {
+                this.logger.warn(`${signal} received, but shutdown is already in progress`);
+                return;
+            }
+            this.isShuttingDown = true;
             this.logger.info(`${signal} received, shutting down gracefully`);
             try {
                 await this.stop();
@@ -62,19 +68,35 @@ export class WorkerService {
             }
         };
 
-        process.on('SIGTERM', () => handleShutdown('SIGTERM'));
-        process.on('SIGINT', () => handleShutdown('SIGINT'));
+        process.on('SIGTERM', () => {
+            handleShutdown('SIGTERM').catch(() => {
+                // Error already logged in handleShutdown
+                process.exit(1);
+            });
+        });
+        process.on('SIGINT', () => {
+            handleShutdown('SIGINT').catch(() => {
+                // Error already logged in handleShutdown
+                process.exit(1);
+            });
+        });
 
         // Handle uncaught exceptions
         process.on('uncaughtException', (error) => {
             this.logger.error(error, 'Uncaught exception');
-            handleShutdown('UNCAUGHT_EXCEPTION');
+            handleShutdown('UNCAUGHT_EXCEPTION').catch(() => {
+                // Error already logged in handleShutdown
+                process.exit(1);
+            });
         });
 
         // Handle unhandled promise rejections
         process.on('unhandledRejection', (reason, promise) => {
             this.logger.error({ reason, promise }, 'Unhandled promise rejection');
-            handleShutdown('UNHANDLED_REJECTION');
+            handleShutdown('UNHANDLED_REJECTION').catch(() => {
+                // Error already logged in handleShutdown
+                process.exit(1);
+            });
         });
 
         this.logger.info('Graceful shutdown handlers registered');
