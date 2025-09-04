@@ -1,0 +1,26 @@
+{
+    "name": "@repo/api",
+    "version": "1.0.0",
+    "description": "Memshelf API application",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "build": "bun build src/index.ts --outdir dist --format esm --target bun",
+        "dev": "bun run src/index.ts",
+        "typecheck": "tsc --noEmit",
+        "prepublishOnly": "bun run build"
+    },
+    "dependencies": {
+        "@repo/database": "*",
+        "@repo/shared-core": "*",
+        "@repo/shared-services": "*",
+        "hono": "^4.9.6"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@repo/typescript-config": "*"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
+}
