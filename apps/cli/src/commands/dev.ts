@@ -1,3 +1,4 @@
+import { JobQueue } from '@repo/queues';
 import { AppCache, AppLogger, AppRedis } from '@repo/shared-services';
 import { Command } from 'commander';
 import type { DependencyContainer } from 'tsyringe';
@@ -91,11 +92,17 @@ export function createDevCommand(container: DependencyContainer): Command {
                     ...config.database,
                     password: '***REDACTED***',
                 },
-                logger: config.logger,
                 redis: {
                     ...config.redis,
                     password: config.redis.password ? '***REDACTED***' : undefined,
                 },
+                apiServer: config.apiServer,
+                queues: {
+                    ...config.queues,
+                    // Redact potential MongoDB credentials in URL
+                    dbUrl: config.queues.dbUrl.replace(/:\/\/([^@]+)@/, '://***REDACTED***@'),
+                },
+                logger: config.logger,
             };
 
             logger.info('Current Configuration');
@@ -116,7 +123,13 @@ export function createDevCommand(container: DependencyContainer): Command {
                 ? process.env
                 : Object.fromEntries(
                       Object.entries(process.env).filter(
-                          ([key]) => key.startsWith('DB_') || key.startsWith('REDIS_') || key === 'NODE_ENV'
+                          ([key]) =>
+                              key.startsWith('DB_') ||
+                              key.startsWith('REDIS_') ||
+                              key.startsWith('API_SERVER_') ||
+                              key.startsWith('AGENDA_') ||
+                              key === 'NODE_ENV' ||
+                              key === 'LOGGER_LEVEL'
                       )
                   );
 
@@ -131,5 +144,32 @@ export function createDevCommand(container: DependencyContainer): Command {
             logger.info(envVars);
         });
 
+    devCommand
+        .command('queue:email')
+        .description('Queue a test email job')
+        .action(async () => {
+            try {
+                logger.info('Queuing test email job...');
+                const jobQueue = container.resolve(JobQueue);
+                const job = await jobQueue.queueEmail({
+                    to: 'test@example.com',
+                    subject: 'Test Email from CLI',
+                    body: 'This is a test email sent from the CLI dev command',
+                    priority: 'normal',
+                });
+                logger.info(
+                    {
+                        jobId: job.attrs._id,
+                        to: 'test@example.com',
+                    },
+                    'Email job queued successfully'
+                );
+                await jobQueue.stop();
+                process.exit(0);
+            } catch (error) {
+                logger.error(error, 'Failed to queue email job');
+                process.exit(1);
+            }
+        });
     return devCommand;
 }

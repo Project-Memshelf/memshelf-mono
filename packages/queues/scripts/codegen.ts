@@ -80,24 +80,37 @@ function generateServiceClass(jobInfo: JobInfo[]): string {
    * Queue ${job.exportName} for immediate processing with validation
    */
   async ${methodName}(data: z.infer<typeof ${job.exportName}.schema>): Promise<Job> {
+    await this.ensureConnection();
+    this.logger?.info({ data }, 'Queuing ${job.exportName}');
+    
     // Validate data before queuing
     const validated = ${job.exportName}.schema.parse(data);
-    return this.agenda.now(${job.exportName}.name, validated);
+    const job = this.agenda.now(${job.exportName}.name, validated);
+    
+    this.logger?.info({ jobName: ${job.exportName}.name }, '${job.exportName} queued successfully');
+    return job;
   }
 
   /**
    * Schedule ${job.exportName} for later processing with validation
    */
   async ${scheduleMethodName}(when: string | Date, data: z.infer<typeof ${job.exportName}.schema>): Promise<Job> {
+    await this.ensureConnection();
+    this.logger?.info({ when, data }, 'Scheduling ${job.exportName}');
+    
     // Validate data before queuing
     const validated = ${job.exportName}.schema.parse(data);
-    return this.agenda.schedule(when, ${job.exportName}.name, validated);
+    const job = this.agenda.schedule(when, ${job.exportName}.name, validated);
+    
+    this.logger?.info({ jobName: ${job.exportName}.name, when }, '${job.exportName} scheduled successfully');
+    return job;
   }`;
         })
         .join('\n');
 
     return `import { Agenda, Job } from 'agenda';
 import { z } from 'zod';
+import type { Logger } from 'pino';
 ${importStatements}
 
 /**
@@ -105,7 +118,27 @@ ${importStatements}
  * This file is auto-generated - do not edit manually
  */
 export class JobQueue {
-  constructor(private agenda: Agenda) {}
+  constructor(private agenda: Agenda, private logger?: Logger) {}
+
+  /**
+   * Ensure Agenda is connected to MongoDB before operations
+   */
+  private async ensureConnection(): Promise<void> {
+    if (!this.agenda._collection) {
+      this.logger?.debug('Waiting for Agenda MongoDB connection...');
+      await new Promise<void>(resolve => {
+        const checkReady = () => {
+          if (this.agenda._collection) {
+            this.logger?.debug('Agenda MongoDB connection established');
+            resolve();
+          } else {
+            setTimeout(checkReady, 100);
+          }
+        };
+        checkReady();
+      });
+    }
+  }
 ${methods}
 
   /**
