@@ -12,14 +12,8 @@ dotenv.config({
 });
 
 /**
- * Environment Variables:
- * - NODE_ENV: Environment (development, production, test)
- * - DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE: Database configuration
- * - REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB: Redis configuration
- * - API_SERVER_HOSTNAME: Server hostname (default: localhost)
- * - API_SERVER_PORT: Server port (default: 3000)
- * - API_SERVER_CORS_ORIGINS: Comma-separated CORS origins (e.g., "http://localhost:3000,https://app.com")
- * - LOGGER_LEVEL: Log level (default: debug)
+ * Configuration factory that creates a validated RepoConfig from environment variables and overrides.
+ * See packages/shared-core/README.md for complete environment variables documentation.
  */
 
 const parseIntWithDefault = (value: string | undefined, defaultValue: number): number => {
