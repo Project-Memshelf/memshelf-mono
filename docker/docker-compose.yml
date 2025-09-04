@@ -32,8 +32,45 @@ services:
     restart: unless-stopped
     command: valkey-server --appendonly yes
 
+  mongodb:
+    image: mongo:8.0.13-noble
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: memshelf
+      MONGO_INITDB_ROOT_PASSWORD: memshelf
+      MONGO_INITDB_DATABASE: jobs
+    ports:
+      - "8381:27017"
+    volumes:
+      - project-memshelf-mongodb-data:/data/db
+      - project-memshelf-mongodb-config:/data/configdb
+    healthcheck:
+      test: [ "CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  mongo-express:
+    image: mongo-express:1.0.2-20
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: memshelf
+      ME_CONFIG_MONGODB_ADMINPASSWORD: memshelf
+      ME_CONFIG_MONGODB_URL: mongodb://memshelf:memshelf@mongodb:27017/
+      ME_CONFIG_BASICAUTH: false
+    ports:
+      - "8382:8081"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   project-memshelf-mariadb-data:
     driver: local
   project-memshelf-redis-data:
+    driver: local
+  project-memshelf-mongodb-data:
+    driver: local
+  project-memshelf-mongodb-config:
     driver: local
