@@ -1,11 +1,11 @@
 import Keyv from '@keyvhq/core';
 import { createDataSource, DataSource } from '@repo/database';
+import { Agenda, createAgendaInstance, JobQueue } from '@repo/queues';
 import { createBaseLogger, type RepoConfig } from '@repo/shared-core';
 import IORedis from 'ioredis';
 import type { Logger } from 'pino';
 import { TaggedKeyv } from 'tagged-keyv-wrapper';
 import { container, type DependencyContainer, type InjectionToken, instanceCachingFactory } from 'tsyringe';
-
 export const AppLogger: InjectionToken<Logger> = 'Logger';
 export const AppCache: InjectionToken<TaggedKeyv> = 'AppCache';
 export const AppRedis: InjectionToken<IORedis> = 'Redis';
@@ -36,6 +36,18 @@ export const createContainer = (config: RepoConfig): DependencyContainer => {
                 db: config.redis.db,
                 maxRetriesPerRequest: null,
             });
+        }),
+    });
+
+    appContainer.register<Agenda>(Agenda, {
+        useFactory: instanceCachingFactory<Agenda>(() => {
+            return createAgendaInstance(config);
+        }),
+    });
+
+    appContainer.register<JobQueue>(JobQueue, {
+        useFactory: instanceCachingFactory<JobQueue>((c) => {
+            return new JobQueue(c.resolve(Agenda), c.resolve(AppLogger));
         }),
     });
 

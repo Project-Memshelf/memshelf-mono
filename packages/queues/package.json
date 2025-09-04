@@ -1,0 +1,30 @@
+{
+    "name": "@repo/queues",
+    "version": "1.0.0",
+    "description": "Type-safe job queue system using Agenda with Zod validation and automatic code generation",
+    "private": true,
+    "type": "module",
+    "module": "src/index.ts",
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "scripts": {
+        "typecheck": "tsc --noEmit",
+        "codegen": "bun run scripts/codegen.ts",
+        "dev": "bun run codegen && bun run typecheck"
+    },
+    "dependencies": {
+        "@repo/shared-core": "*",
+        "agenda": "^5.0.0",
+        "tsyringe": "^4.10.0",
+        "zod": "^3.25.76"
+    },
+    "devDependencies": {
+        "@repo/typescript-config": "*",
+        "@types/agenda": "^4.1.4",
+        "@types/bun": "^1.2.19",
+        "ts-morph": "^26.0.0"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
+}

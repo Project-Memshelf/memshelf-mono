@@ -69,6 +69,9 @@ const defaultConfig: DeepPartial<RepoConfig> = {
             maxRequests: parseIntWithDefault(process.env.API_SERVER_RATE_LIMIT_MAX_REQUESTS, 100),
         },
     },
+    queues: {
+        dbUrl: process.env.AGENDA_URL ?? 'mongodb://localhost:27017/jobs',
+    },
 };
 
 interface CreateRepoConfigOptions extends Omit<DeepPartial<RepoConfig>, 'logger'> {
