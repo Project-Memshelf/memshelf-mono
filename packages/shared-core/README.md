@@ -271,7 +271,17 @@ const dataSource = new DataSource({
     database: config.database.database
 });
 
-logger.info('Application started', { database: config.database.database });
+// Use API server configuration
+const server = serve({
+    hostname: config.apiServer.hostname,
+    port: config.apiServer.port,
+    fetch: app.fetch,
+});
+
+logger.info('Application started', { 
+    database: config.database.database,
+    apiServer: { hostname: config.apiServer.hostname, port: config.apiServer.port }
+});
 ```
 
 ### Web Application
@@ -309,8 +319,9 @@ export function usePagination<T>(fetchFn: (options: PaginationOptions) => Promis
 |--------|-------------|-----------|
 | `DatabaseConfigSchema` | Database configuration | Database connection settings |
 | `RedisConfigSchema` | Redis configuration | Redis connection settings |
+| `ApiServerConfig` | API server configuration | Server settings, CORS, rate limiting |
 | `LoggerConfigSchema` | Logger configuration | Pino logger options |
-| `RepoConfigSchema` | Combined repository config | Database + Redis + Logger config |
+| `RepoConfigSchema` | Combined repository config | Database + Redis + API Server + Logger config |
 | `PaginationOptionsSchema` | Pagination request options | Page, limit, filters |
 | `PaginatedResultSchema<T>` | Paginated response | Items array with metadata |
 

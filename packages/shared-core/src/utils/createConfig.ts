@@ -58,8 +58,15 @@ const defaultConfig: DeepPartial<RepoConfig> = {
     apiServer: {
         hostname: process.env.API_SERVER_HOSTNAME ?? 'localhost',
         port: parseIntWithDefault(process.env.API_SERVER_PORT, 3000),
+        timeout: parseIntWithDefault(process.env.API_SERVER_TIMEOUT, 30000),
+        bodyLimit: parseIntWithDefault(process.env.API_SERVER_BODY_LIMIT, 1024 * 1024), // 1MB
+        keepAliveTimeout: parseIntWithDefault(process.env.API_SERVER_KEEP_ALIVE_TIMEOUT, 5000),
         cors: {
             origins: parseCorsOrigins(process.env.API_SERVER_CORS_ORIGINS),
+        },
+        rateLimit: {
+            windowMs: parseIntWithDefault(process.env.API_SERVER_RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
+            maxRequests: parseIntWithDefault(process.env.API_SERVER_RATE_LIMIT_MAX_REQUESTS, 100),
         },
     },
 };
