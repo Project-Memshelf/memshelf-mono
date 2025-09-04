@@ -123,15 +123,38 @@ console.log(config.logger.name); // 'my-app'
 
 The configuration system automatically loads these environment variables:
 
-- `DB_HOST` (default: localhost)
-- `DB_PORT` (default: 3306)
-- `DB_USERNAME` (default: memshelf)
-- `DB_PASSWORD` (default: memshelf)
-- `DB_DATABASE` (default: memshelf)
-- `REDIS_HOST` (default: localhost)
-- `REDIS_PORT` (default: 6379)
-- `REDIS_PASSWORD` (optional)
-- `REDIS_DB` (default: 0)
+**General Configuration:**
+- `NODE_ENV`: Environment (development, production, test)
+
+**Database Configuration:**
+- `DB_HOST`: Database host (default: localhost)
+- `DB_PORT`: Database port (default: 3306)
+- `DB_USERNAME`: Database username (default: db_username)
+- `DB_PASSWORD`: Database password (default: db_password)
+- `DB_DATABASE`: Database name (default: db_database)
+
+**Redis Configuration:**
+- `REDIS_HOST`: Redis host (default: localhost)
+- `REDIS_PORT`: Redis port (default: 6379)
+- `REDIS_PASSWORD`: Redis password (optional)
+- `REDIS_DB`: Redis database number (default: 0)
+
+**API Server Configuration:**
+- `API_SERVER_HOSTNAME`: Server hostname (default: localhost)
+- `API_SERVER_PORT`: Server port (default: 3000)
+- `API_SERVER_CORS_ORIGINS`: Comma-separated CORS origins (e.g., "http://localhost:3000,https://app.com")
+
+**Logger Configuration:**
+- `LOGGER_LEVEL`: Log level (default: debug)
+
+**Server Configuration (Optional):**
+- `SERVER_TIMEOUT`: Server timeout in milliseconds (default: 30000)
+- `BODY_LIMIT`: Request body size limit in bytes (default: 1048576 = 1MB)
+- `KEEP_ALIVE_TIMEOUT`: Keep-alive timeout in milliseconds (default: 5000)
+
+**Security Configuration (Optional):**
+- `RATE_LIMIT_WINDOW_MS`: Rate limiting window in milliseconds (default: 900000 = 15 minutes)
+- `RATE_LIMIT_MAX_REQUESTS`: Maximum requests per window (default: 100)
 
 ### Validation
 
@@ -248,7 +271,17 @@ const dataSource = new DataSource({
     database: config.database.database
 });
 
-logger.info('Application started', { database: config.database.database });
+// Use API server configuration
+const server = serve({
+    hostname: config.apiServer.hostname,
+    port: config.apiServer.port,
+    fetch: app.fetch,
+});
+
+logger.info('Application started', { 
+    database: config.database.database,
+    apiServer: { hostname: config.apiServer.hostname, port: config.apiServer.port }
+});
 ```
 
 ### Web Application
@@ -286,8 +319,9 @@ export function usePagination<T>(fetchFn: (options: PaginationOptions) => Promis
 |--------|-------------|-----------|
 | `DatabaseConfigSchema` | Database configuration | Database connection settings |
 | `RedisConfigSchema` | Redis configuration | Redis connection settings |
+| `ApiServerConfig` | API server configuration | Server settings, CORS, rate limiting |
 | `LoggerConfigSchema` | Logger configuration | Pino logger options |
-| `RepoConfigSchema` | Combined repository config | Database + Redis + Logger config |
+| `RepoConfigSchema` | Combined repository config | Database + Redis + API Server + Logger config |
 | `PaginationOptionsSchema` | Pagination request options | Page, limit, filters |
 | `PaginatedResultSchema<T>` | Paginated response | Items array with metadata |
 

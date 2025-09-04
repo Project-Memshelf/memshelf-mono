@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { nodeEnvs } from '../../types';
+import { ApiServerConfig } from './ApiServerConfig';
 import { DatabaseConfigSchema } from './DatabaseConfigSchema';
 import { LoggerConfigSchema } from './LoggerConfigSchema';
 import { RedisConfigSchema } from './RedisConfigSchema';
@@ -13,6 +14,7 @@ export const RepoConfigSchema = z.object({
     database: DatabaseConfigSchema,
     logger: LoggerConfigSchema,
     redis: RedisConfigSchema,
+    apiServer: ApiServerConfig,
 });
 
 export type RepoConfig = z.infer<typeof RepoConfigSchema>;

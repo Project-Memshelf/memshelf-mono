@@ -4,8 +4,6 @@ Memshelf CLI application built with Commander.js for managing your digital memor
 
 ## Features
 
-- **Database Management**: Run migrations, check status, seed data
-- **Cache Operations**: Clear cache, view stats, get/set values
 - **Development Tools**: Health checks, configuration display, system info
 - **Modular Architecture**: Well-organized command structure
 - **Dependency Injection**: Uses shared services with TSyringe
@@ -35,47 +33,6 @@ bun run typecheck
 
 ### Available Commands
 
-#### Database Commands
-
-```bash
-# Run database migrations
-bun run dev db migrate
-
-# Revert last migration
-bun run dev db revert
-
-# Check migration status
-bun run dev db status
-
-# Seed database with sample data
-bun run dev db seed
-bun run dev db seed --environment production
-```
-
-#### Cache Commands
-
-```bash
-# Clear all caches
-bun run dev cache clear
-
-# Clear only Redis cache
-bun run dev cache clear --redis-only
-
-# Clear only application cache
-bun run dev cache clear --app-cache-only
-
-# Show cache statistics
-bun run dev cache stats
-
-# Get a value from cache
-bun run dev cache get user:123
-bun run dev cache get config --json
-
-# Set a value in cache
-bun run dev cache set user:123 "John Doe"
-bun run dev cache set config '{"theme":"dark"}' --json --ttl 3600
-```
-
 #### Development Commands
 
 ```bash
@@ -97,14 +54,14 @@ bun run dev dev env --all
 
 ```bash
 # Enable verbose output
-bun run dev --verbose db migrate
+bun run dev --verbose dev info
 
 # Suppress non-error output
-bun run dev --quiet cache clear
+bun run dev --quiet dev health
 
 # Show help
 bun run dev --help
-bun run dev db --help
+bun run dev dev --help
 
 # Show version
 bun run dev --version
@@ -117,8 +74,6 @@ bun run dev --version
 ```
 src/
 ├── commands/
-│   ├── database.ts      # Database management commands
-│   ├── cache.ts         # Cache operations
 │   ├── dev.ts           # Development utilities
 │   └── index.ts         # Command exports
 └── index.ts             # Main CLI entry point
@@ -140,8 +95,8 @@ const container = createContainer(config);
 ```
 
 Services available in commands:
-- `DataSource` - TypeORM database connection
 - `AppLogger` - Application logger
+- `DataSource` - TypeORM database connection  
 - `AppCache` - Application cache
 - `AppRedis` - Redis connection
 
@@ -151,10 +106,12 @@ Services available in commands:
 
 ```typescript
 // src/commands/users.ts
+import { AppLogger } from '@repo/shared-services';
 import { Command } from 'commander';
 import type { DependencyContainer } from 'tsyringe';
 
 export function createUsersCommand(container: DependencyContainer): Command {
+    const logger = container.resolve(AppLogger);
     const usersCommand = new Command('users');
     usersCommand.description('User management commands');
 
@@ -162,6 +119,7 @@ export function createUsersCommand(container: DependencyContainer): Command {
         .command('list')
         .description('List all users')
         .action(async () => {
+            logger.info('Listing all users...');
             // Implement user listing
         });
 
@@ -172,14 +130,16 @@ export function createUsersCommand(container: DependencyContainer): Command {
 2. Export from `src/commands/index.ts`:
 
 ```typescript
+export { createDevCommand } from './dev';
 export { createUsersCommand } from './users';
 ```
 
 3. Add to main CLI in `src/index.ts`:
 
 ```typescript
-import { createUsersCommand } from './commands';
+import { createDevCommand, createUsersCommand } from './commands';
 
+program.addCommand(createDevCommand(container));
 program.addCommand(createUsersCommand(container));
 ```
 
@@ -224,17 +184,9 @@ node dist/index.js --help
 ### Common Workflows
 
 ```bash
-# Set up a new environment
-bun run dev db migrate
-bun run dev db seed
-bun run dev dev health
-
-# Clear caches after deployment
-bun run dev cache clear
-
 # Check system status
 bun run dev dev health
-bun run dev cache stats
+bun run dev dev info
 
 # Debug configuration issues
 bun run dev dev config
@@ -247,16 +199,16 @@ The CLI is designed to be script-friendly:
 
 ```bash
 #!/bin/bash
-# deployment.sh
+# health-check.sh
 
-echo "Running database migrations..."
-bun run dev db migrate
-
-echo "Clearing caches..."
-bun run dev cache clear
-
-echo "Health check..."
+echo "Checking system health..."
 bun run dev dev health
+
+echo "Displaying system info..."
+bun run dev dev info
+
+echo "Checking configuration..."
+bun run dev dev config
 ```
 
 ## Development
@@ -266,9 +218,9 @@ bun run dev dev health
 bun run typecheck
 
 # Run specific commands in development
-bun run dev db migrate
-bun run dev cache clear
 bun run dev dev info
+bun run dev dev health
+bun run dev dev config
 ```
 
 ## Requirements
@@ -284,6 +236,14 @@ bun run dev dev info
 - `@repo/shared-core` - Core utilities and configuration
 - `@repo/shared-services` - Service layer with DI
 - `@repo/database` - Database entities and services
+
+## Key Features
+
+- **Streamlined Development Focus**: Focused on essential development and debugging tools
+- **Proper Logging**: Uses structured logging throughout with `AppLogger`
+- **Service Integration**: Tests connectivity to all core services (Database, Redis, Cache)
+- **Configuration Management**: Sanitized configuration display for debugging
+- **Environment Inspection**: Safe environment variable display with automatic redaction
 
 ## License
 

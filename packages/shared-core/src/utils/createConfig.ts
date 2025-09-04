@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import { merge } from 'ts-deepmerge';
+import { ZodError } from 'zod';
 import type { LoggerConfig } from '../schemas';
 import { type RepoConfig, RepoConfigSchema } from '../schemas';
 import { type DeepPartial, NodeEnv } from '../types';
@@ -10,6 +11,25 @@ dotenv.config({
     path: ['../../.env'],
 });
 
+/**
+ * Configuration factory that creates a validated RepoConfig from environment variables and overrides.
+ * See packages/shared-core/README.md for complete environment variables documentation.
+ */
+
+const parseIntWithDefault = (value: string | undefined, defaultValue: number): number => {
+    const parsed = value ? parseInt(value, 10) : NaN;
+    return Number.isNaN(parsed) ? defaultValue : parsed;
+};
+
+const parseCorsOrigins = (origins: string | undefined): string[] => {
+    return origins
+        ? origins
+              .split(',')
+              .map((origin) => origin.trim())
+              .filter(Boolean)
+        : [];
+};
+
 const defaultConfig: DeepPartial<RepoConfig> = {
     nodeEnv: {
         env: NodeEnv.development,
@@ -18,7 +38,7 @@ const defaultConfig: DeepPartial<RepoConfig> = {
     },
     database: {
         host: process.env.DB_HOST ?? 'localhost',
-        port: Number(process.env.DB_PORT ?? 3306),
+        port: parseIntWithDefault(process.env.DB_PORT, 3306),
         username: process.env.DB_USERNAME ?? 'db_username',
         password: process.env.DB_PASSWORD ?? 'db_password',
         database: process.env.DB_DATABASE ?? 'db_database',
@@ -31,9 +51,23 @@ const defaultConfig: DeepPartial<RepoConfig> = {
     },
     redis: {
         host: process.env.REDIS_HOST ?? 'localhost',
-        port: Number(process.env.REDIS_PORT ?? 6379),
+        port: parseIntWithDefault(process.env.REDIS_PORT, 6379),
         password: process.env.REDIS_PASSWORD,
-        db: Number(process.env.REDIS_DB ?? 0),
+        db: parseIntWithDefault(process.env.REDIS_DB, 0),
+    },
+    apiServer: {
+        hostname: process.env.API_SERVER_HOSTNAME ?? 'localhost',
+        port: parseIntWithDefault(process.env.API_SERVER_PORT, 3000),
+        timeout: parseIntWithDefault(process.env.API_SERVER_TIMEOUT, 30000),
+        bodyLimit: parseIntWithDefault(process.env.API_SERVER_BODY_LIMIT, 1024 * 1024), // 1MB
+        keepAliveTimeout: parseIntWithDefault(process.env.API_SERVER_KEEP_ALIVE_TIMEOUT, 5000),
+        cors: {
+            origins: parseCorsOrigins(process.env.API_SERVER_CORS_ORIGINS),
+        },
+        rateLimit: {
+            windowMs: parseIntWithDefault(process.env.API_SERVER_RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
+            maxRequests: parseIntWithDefault(process.env.API_SERVER_RATE_LIMIT_MAX_REQUESTS, 100),
+        },
     },
 };
 
@@ -45,14 +79,30 @@ interface CreateRepoConfigOptions extends Omit<DeepPartial<RepoConfig>, 'logger'
 }
 
 export const createRepoConfig = (overrides: CreateRepoConfigOptions): RepoConfig => {
-    const env: NodeEnv = (Bun.env.NODE_ENV ?? NodeEnv.development) as NodeEnv;
+    try {
+        const env: NodeEnv = (Bun.env.NODE_ENV ?? NodeEnv.development) as NodeEnv;
 
-    const merged = merge(defaultConfig, overrides, {
-        nodeEnv: {
-            env,
-            isDevelopment: env === NodeEnv.development,
-            isTesting: env === NodeEnv.test,
-        },
-    }) as RepoConfig;
-    return RepoConfigSchema.parse(merged);
+        const merged = merge(defaultConfig, overrides, {
+            nodeEnv: {
+                env,
+                isDevelopment: env === NodeEnv.development,
+                isTesting: env === NodeEnv.test,
+            },
+        }) as RepoConfig;
+        return RepoConfigSchema.parse(merged);
+    } catch (e: unknown) {
+        if (e instanceof ZodError) {
+            console.error('❌ Configuration Validation Failed:');
+            e.issues.forEach((issue) => {
+                console.error('  •', {
+                    path: issue.path.join('.') || 'root',
+                    message: issue.message,
+                    code: issue.code,
+                    ...('received' in issue && { received: issue.received }),
+                });
+            });
+            process.exit(1);
+        }
+        throw e;
+    }
 };

@@ -1,0 +1,6 @@
+preload = ["./src/reflect-metadata-import.ts"]
+
+[test]
+preload = ["./src/reflect-metadata-import.ts"]
+coverageReporter  = ["text", "lcov"]  # default ["text"]
+coverageDir = "coverage"  # default "coverage"
