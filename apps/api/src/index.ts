@@ -14,14 +14,14 @@ const server = serve({
 logger.info({ hostname, port }, 'HTTP server started');
 
 // Graceful shutdown handling
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
     logger.info('SIGTERM received, shutting down gracefully');
-    server.stop();
+    await server.stop();
     process.exit(0);
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
     logger.info('SIGINT received, shutting down gracefully');
-    server.stop();
+    await server.stop();
     process.exit(0);
 });
