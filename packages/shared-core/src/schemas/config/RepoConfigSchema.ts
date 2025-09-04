@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import { nodeEnvs } from '../../types';
-import { ApiServerConfig } from './ApiServerConfig';
+import { ApiServerConfigSchema } from './ApiServerConfigSchema';
 import { DatabaseConfigSchema } from './DatabaseConfigSchema';
 import { LoggerConfigSchema } from './LoggerConfigSchema';
+import { QueueConfigSchema } from './QueueConfigSchema';
 import { RedisConfigSchema } from './RedisConfigSchema';
 
 export const RepoConfigSchema = z.object({
@@ -14,7 +15,8 @@ export const RepoConfigSchema = z.object({
     database: DatabaseConfigSchema,
     logger: LoggerConfigSchema,
     redis: RedisConfigSchema,
-    apiServer: ApiServerConfig,
+    apiServer: ApiServerConfigSchema,
+    queues: QueueConfigSchema,
 });
 
 export type RepoConfig = z.infer<typeof RepoConfigSchema>;
