@@ -51,6 +51,21 @@
         "typescript": "^5",
       },
     },
+    "apps/workers": {
+      "name": "@repo/workers",
+      "version": "1.0.0",
+      "dependencies": {
+        "@repo/shared-core": "*",
+        "@repo/shared-services": "*",
+      },
+      "devDependencies": {
+        "@repo/typescript-config": "*",
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
     "packages/database": {
       "name": "@repo/database",
       "version": "1.0.0",
@@ -112,6 +127,7 @@
       "name": "@repo/shared-services",
       "dependencies": {
         "@keyvhq/core": "^2.1.7",
+        "@repo/queues": "*",
         "@repo/shared-core": "*",
         "ioredis": "^5.7.0",
         "tagged-keyv-wrapper": "^1.1.0",
@@ -293,6 +309,8 @@
     "@repo/shared-services": ["@repo/shared-services@workspace:packages/shared-services"],
 
     "@repo/typescript-config": ["@repo/typescript-config@workspace:packages/typescript-config"],
+
+    "@repo/workers": ["@repo/workers@workspace:apps/workers"],
 
     "@smithy/abort-controller": ["@smithy/abort-controller@4.0.5", "", { "dependencies": { "@smithy/types": "^4.3.2", "tslib": "^2.6.2" } }, "sha512-jcrqdTQurIrBbUm4W2YdLVMQDoL0sA9DTxYd2s+R/y+2U9NLOP7Xf/YqfSg1FZhlZIYEnvk2mwbyvIfdLEPo8g=="],
 

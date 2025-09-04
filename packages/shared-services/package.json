@@ -14,7 +14,8 @@
         "@repo/shared-core": "*",
         "ioredis": "^5.7.0",
         "tagged-keyv-wrapper": "^1.1.0",
-        "tsyringe": "^4.10.0"
+        "tsyringe": "^4.10.0",
+        "@repo/queues": "*"
     },
     "devDependencies": {
         "@types/bun": "^1.2.19",

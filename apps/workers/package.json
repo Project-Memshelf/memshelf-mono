@@ -1,0 +1,23 @@
+{
+    "name": "@repo/workers",
+    "version": "1.0.0",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "build": "bun build src/index.ts --outdir dist --format esm --target bun",
+        "dev": "bun run src/index.ts",
+        "typecheck": "tsc --noEmit",
+        "prepublishOnly": "bun run build"
+    },
+    "dependencies": {
+        "@repo/shared-core": "*",
+        "@repo/shared-services": "*"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@repo/typescript-config": "*"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
+}
