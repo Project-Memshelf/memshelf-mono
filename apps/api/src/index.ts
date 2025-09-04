@@ -5,10 +5,23 @@ import { honoApp } from './http-server';
 
 const logger = container.resolve(AppLogger);
 const { hostname, port } = config.apiServer;
-serve({
+const server = serve({
     port,
     hostname,
     fetch: honoApp.fetch,
 });
 
 logger.info({ hostname, port }, 'HTTP server started');
+
+// Graceful shutdown handling
+process.on('SIGTERM', () => {
+    logger.info('SIGTERM received, shutting down gracefully');
+    server.stop();
+    process.exit(0);
+});
+
+process.on('SIGINT', () => {
+    logger.info('SIGINT received, shutting down gracefully');
+    server.stop();
+    process.exit(0);
+});
