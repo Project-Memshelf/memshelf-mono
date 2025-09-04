@@ -32,7 +32,11 @@
         "docker:start": "docker compose -f ./docker/docker-compose.yml up -d",
         "docker:stop": "docker compose -f ./docker/docker-compose.yml down",
         "docker:clear": "docker compose -f ./docker/docker-compose.yml down -v",
-        "docker:logs": "docker compose -f ./docker/docker-compose.yml logs -f"
+        "docker:logs": "docker compose -f ./docker/docker-compose.yml logs -f",
+        "cli": "bun run --cwd apps/cli dev --",
+        "cli:build": "bun run --cwd apps/cli build",
+        "cli:dev": "bun run --cwd apps/cli dev --",
+        "memshelf": "bun run --cwd apps/cli dev --"
     },
     "devDependencies": {
         "@biomejs/biome": "^2.2.2",
