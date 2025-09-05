@@ -5,6 +5,15 @@
 The Memshelf database schema is designed for **flexibility**, **performance**, and **data integrity**. Built for MariaDB
 with TypeORM, it supports complex knowledge relationships while maintaining query efficiency.
 
+### Soft Delete Pattern
+
+The database implements **soft delete** functionality through the `AppEntity` base class:
+
+* All entities extending `AppEntity` inherit a `deleted_at` TIMESTAMP column
+* Records are marked as deleted by setting `deleted_at` instead of being physically removed
+* Queries automatically filter out soft-deleted records unless explicitly included
+* Allows for data recovery and audit trails while maintaining referential integrity
+
 ---
 
 ## Core Tables
@@ -20,6 +29,7 @@ Represents system users (primarily AI agents and service accounts).
 * `api_key` - VARCHAR(255), UNIQUE, NOT NULL - Authentication token
 * `created_at` - TIMESTAMP, DEFAULT CURRENT\_TIMESTAMP
 * `updated_at` - TIMESTAMP, DEFAULT CURRENT\_TIMESTAMP ON UPDATE CURRENT\_TIMESTAMP
+* `deleted_at` - TIMESTAMP, NULLABLE - Soft delete timestamp
 
 **Indexes:**
 
@@ -45,6 +55,7 @@ Logical groupings of related notes with shared permissions.
 * `description` - TEXT, NULLABLE - Optional workspace description
 * `created_at` - TIMESTAMP, DEFAULT CURRENT\_TIMESTAMP
 * `updated_at` - TIMESTAMP, DEFAULT CURRENT\_TIMESTAMP ON UPDATE CURRENT\_TIMESTAMP
+* `deleted_at` - TIMESTAMP, NULLABLE - Soft delete timestamp
 
 **Indexes:**
 
@@ -96,6 +107,7 @@ Core content storage with full Markdown support.
 * `content` - LONGTEXT, DEFAULT '' - Current Markdown content snapshot
 * `created_at` - TIMESTAMP, DEFAULT CURRENT\_TIMESTAMP
 * `updated_at` - TIMESTAMP, DEFAULT CURRENT\_TIMESTAMP ON UPDATE CURRENT\_TIMESTAMP
+* `deleted_at` - TIMESTAMP, NULLABLE - Soft delete timestamp
 * `version` - INT, DEFAULT 1 - TypeORM optimistic locking for conflict detection
 
 **Indexes:**
@@ -127,6 +139,8 @@ Incremental edit operations for efficient content updates.
 * `length` - INT, NOT NULL, DEFAULT 0 - Characters to delete (0 for pure insert)
 * `new_text` - TEXT, DEFAULT '' - Replacement text (empty for pure delete)
 * `created_at` - TIMESTAMP, DEFAULT CURRENT\_TIMESTAMP
+* `updated_at` - TIMESTAMP, DEFAULT CURRENT\_TIMESTAMP ON UPDATE CURRENT\_TIMESTAMP
+* `deleted_at` - TIMESTAMP, NULLABLE - Soft delete timestamp
 * `applied_at` - TIMESTAMP, NULLABLE - When diff was applied to note content
 
 **Indexes:**
@@ -156,6 +170,8 @@ Reusable labels for categorizing content.
 * `name` - VARCHAR(100), UNIQUE, NOT NULL - Tag label (lowercase, hyphen-separated)
 * `display_name` - VARCHAR(100), NOT NULL - Human-readable tag name
 * `created_at` - TIMESTAMP, DEFAULT CURRENT\_TIMESTAMP
+* `updated_at` - TIMESTAMP, DEFAULT CURRENT\_TIMESTAMP ON UPDATE CURRENT\_TIMESTAMP
+* `deleted_at` - TIMESTAMP, NULLABLE - Soft delete timestamp
 
 **Indexes:**
 
@@ -229,6 +245,8 @@ UUID-based links between notes for knowledge graph functionality.
 * `link_text` - VARCHAR(500), NOT NULL - The display text used for the link
 * `position` - INT, NOT NULL - Character position in source note content
 * `created_at` - TIMESTAMP, DEFAULT CURRENT\_TIMESTAMP
+* `updated_at` - TIMESTAMP, DEFAULT CURRENT\_TIMESTAMP ON UPDATE CURRENT\_TIMESTAMP
+* `deleted_at` - TIMESTAMP, NULLABLE - Soft delete timestamp
 
 **Indexes:**
 
