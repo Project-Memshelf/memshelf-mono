@@ -1,6 +1,7 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
     "name": "memshelf-mono",
+    "version": "1.0.0",
     "description": "The monorepo for Project Memshelf",
     "private": true,
     "author": "Angel S. Moreno <angelxmoreno@gmail.com>",
