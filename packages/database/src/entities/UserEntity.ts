@@ -1,5 +1,6 @@
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Entity, Index, OneToMany, type Relation } from 'typeorm';
 import { AppEntity } from '../core/AppEntity';
+import { UserPermissionEntity } from './UserPermissionEntity';
 
 @Entity()
 export class UserEntity extends AppEntity {
@@ -8,5 +9,11 @@ export class UserEntity extends AppEntity {
 
     @Column()
     @Index({ unique: true })
-    email: string;
+    apiKey: string;
+
+    @OneToMany(
+        () => UserPermissionEntity,
+        (permission) => permission.user
+    )
+    permissions: Relation<UserPermissionEntity[]>;
 }
