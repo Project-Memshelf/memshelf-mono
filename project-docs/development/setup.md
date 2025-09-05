@@ -34,7 +34,7 @@ bun install
 
 ### 3. Start Development Environment
 ```bash
-# Start all services (database, cache, search)
+# Start all services (database, cache, search, mongodb, workers)
 docker-compose up -d
 
 # Run database migrations
@@ -52,11 +52,21 @@ bun run dev
 # Check API health
 curl http://localhost:3000/health
 
+# Check MongoDB connection (queue database)
+curl http://localhost:8382  # Mongo Express GUI
+
+# Test queue system via CLI
+bun run --cwd apps/cli src/index.ts dev queue:email
+
+# Generate queue types (if adding new jobs)
+bun run --cwd packages/queues codegen
+
 # Run tests
 bun test
 
-# Check linting
+# Check linting and types
 bun run lint
+bun run typecheck
 ```
 
 ---
@@ -75,21 +85,59 @@ memshelf/
 │   │   │   └── utils/       # Utility functions
 │   │   ├── tests/           # API tests
 │   │   └── package.json
-│   └── cli/                 # CLI tools (future)
+│   ├── cli/                 # CLI tools and development commands
+│   │   ├── src/
+│   │   │   └── commands/    # CLI command implementations
+│   │   └── package.json
+│   └── workers/             # Background job processing
+│       ├── src/
+│       │   └── index.ts     # Worker entry point
+│       └── package.json
 ├── packages/
-│   ├── shared/              # Shared types and utilities
+│   ├── shared-core/         # Core configuration and utilities
+│   │   ├── src/
+│   │   │   ├── config/      # Application configuration
+│   │   │   ├── logger/      # Logging utilities
+│   │   │   └── schemas/     # Shared Zod schemas
+│   │   └── package.json
+│   ├── shared-services/     # Dependency injection and services
+│   │   ├── src/
+│   │   │   └── createContainer.ts # DI container setup
+│   │   └── package.json
+│   ├── queues/              # Type-safe job queue system
+│   │   ├── src/
+│   │   │   ├── jobs/        # Job definitions
+│   │   │   ├── generated/   # Auto-generated queue classes
+│   │   │   ├── types/       # Queue type definitions
+│   │   │   └── WorkerService.ts # Worker management
+│   │   ├── scripts/
+│   │   │   └── codegen.ts   # TypeScript code generator
+│   │   └── package.json
 │   ├── database/            # Database schemas and migrations
+│   │   ├── src/
+│   │   │   ├── entities/    # TypeORM entities
+│   │   │   └── migrations/  # Database migrations
+│   │   └── package.json
 │   └── search/              # Search service integration
+│       ├── src/
+│       │   └── meilisearch/ # Meilisearch integration
+│       └── package.json
 ├── docker/
 │   ├── api.dockerfile       # API container
 │   ├── dev.dockerfile       # Development container
+│   ├── workers.dockerfile   # Workers container
 │   └── nginx.conf           # Reverse proxy config
-├── docs/                    # Documentation
-├── scripts/                 # Development scripts
+├── project-docs/            # Project documentation
+│   ├── api/                 # API documentation
+│   ├── architecture/        # System architecture docs
+│   └── development/         # Development guides
+├── scripts/                 # Development and deployment scripts
 ├── docker-compose.yml       # Development services
 ├── docker-compose.prod.yml  # Production services
 ├── turbo.json              # Monorepo configuration
 ├── package.json            # Root package configuration
+├── lefthook.yml            # Git hooks configuration
+├── biome.json              # Code formatting configuration
 └── README.md
 ```
 
@@ -112,6 +160,11 @@ REDIS_URL="redis://localhost:6379"
 MEILISEARCH_URL="http://localhost:7700"
 MEILISEARCH_MASTER_KEY="development_key"
 
+# Queue System
+AGENDA_DB_URL="mongodb://memshelf:memshelf@localhost:27017/jobs?authSource=admin"
+AGENDA_PROCESS_EVERY="10 seconds"
+AGENDA_MAX_CONCURRENCY=20
+
 # API
 API_PORT=3000
 API_KEY_SALT="your_development_salt_here"
@@ -131,6 +184,7 @@ DATABASE_URL="mysql://memshelf:password@localhost:3306/memshelf_test"
 REDIS_URL="redis://localhost:6379/1"
 MEILISEARCH_URL="http://localhost:7700"
 MEILISEARCH_MASTER_KEY="test_key"
+AGENDA_DB_URL="mongodb://memshelf:memshelf@localhost:27017/jobs_test?authSource=admin"
 API_PORT=3001
 NODE_ENV="test"
 LOG_LEVEL="error"
@@ -143,6 +197,9 @@ LOG_LEVEL="error"
 | `REDIS_URL` | Valkey/Redis connection string | - | Yes |
 | `MEILISEARCH_URL` | Meilisearch server URL | - | Yes |
 | `MEILISEARCH_MASTER_KEY` | Meilisearch admin key | - | Yes |
+| `AGENDA_DB_URL` | MongoDB connection string for jobs | - | Yes |
+| `AGENDA_PROCESS_EVERY` | Job processing interval | 10 seconds | No |
+| `AGENDA_MAX_CONCURRENCY` | Max concurrent jobs | 20 | No |
 | `API_PORT` | HTTP server port | 3000 | No |
 | `API_KEY_SALT` | Salt for API key hashing | - | Yes |
 | `LOG_LEVEL` | Logging level | info | No |
@@ -187,6 +244,34 @@ services:
     volumes:
       - search_data:/meili_data
 
+  mongodb:
+    image: mongo:8.0.13-noble
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: memshelf
+      MONGO_INITDB_ROOT_PASSWORD: memshelf
+      MONGO_INITDB_DATABASE: jobs
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo-express:
+    image: mongo-express:1.0.2-20-alpine3.19
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: memshelf
+      ME_CONFIG_MONGODB_ADMINPASSWORD: memshelf
+      ME_CONFIG_MONGODB_URL: mongodb://memshelf:memshelf@mongodb:27017/
+      ME_CONFIG_BASICAUTH: false
+    ports:
+      - "8382:8081"
+    depends_on:
+      - mongodb
+
   api:
     build:
       context: .
@@ -198,6 +283,7 @@ services:
       REDIS_URL: redis://cache:6379
       MEILISEARCH_URL: http://search:7700
       MEILISEARCH_MASTER_KEY: development_key
+      AGENDA_DB_URL: mongodb://memshelf:memshelf@mongodb:27017/jobs?authSource=admin
     volumes:
       - .:/app
       - /app/node_modules
@@ -205,12 +291,33 @@ services:
       - database
       - cache
       - search
+      - mongodb
     command: bun run dev
+
+  workers:
+    build:
+      context: .
+      dockerfile: docker/dev.dockerfile
+    environment:
+      DATABASE_URL: mysql://memshelf:password@database:3306/memshelf_dev
+      REDIS_URL: redis://cache:6379
+      AGENDA_DB_URL: mongodb://memshelf:memshelf@mongodb:27017/jobs?authSource=admin
+      LOG_LEVEL: debug
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - database
+      - cache
+      - mongodb
+    command: bun run --cwd apps/workers src/index.ts
+    restart: unless-stopped
 
 volumes:
   db_data:
   cache_data:
   search_data:
+  mongodb_data:
 ```
 
 ### Service Management
@@ -257,7 +364,11 @@ bun run db:reset
     "db:migrate": "bun run --cwd packages/database migrate",
     "db:migration:generate": "bun run --cwd packages/database migration:generate",
     "db:seed": "bun run --cwd packages/database seed",
-    "db:reset": "bun run --cwd packages/database reset"
+    "db:reset": "bun run --cwd packages/database reset",
+    "queue:codegen": "bun run --cwd packages/queues codegen",
+    "queue:test": "bun run --cwd apps/cli src/index.ts dev queue:email",
+    "workers:start": "bun run --cwd apps/workers src/index.ts",
+    "workers:dev": "bun run --cwd apps/workers --watch src/index.ts"
   }
 }
 ```

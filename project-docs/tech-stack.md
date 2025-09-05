@@ -59,12 +59,43 @@
 - **Active Record and Data Mapper** patterns support
 - **Cross-database compatibility** for future flexibility
 
+### MongoDB
+- **Document database** for job queue persistence
+- **High-performance** job storage and retrieval
+- **Flexible schema** for varying job data structures
+- **Built-in clustering** and replication support
+- **Optimized for Agenda** job queue operations
+
 ### Valkey (Redis)
 - **In-memory caching** for improved performance
 - **Session storage** for API key validation
 - **Rate limiting** support
 - **Pub/sub capabilities** for future real-time features
 - **Data structure operations** (sets, lists, hashes)
+
+## Queue System & Background Jobs
+
+### Agenda
+- **MongoDB-based job queue** for reliable task processing
+- **Persistent job storage** with automatic retries
+- **Cron-like scheduling** for recurring tasks
+- **Graceful shutdown** and job recovery
+- **Concurrency control** and job prioritization
+- **Dashboard monitoring** capabilities
+
+### TypeScript Code Generation
+- **Automatic type-safe job definitions** using ts-morph
+- **Schema validation** with Zod for job data
+- **Generated JobQueue class** with typed methods
+- **DRY principles** - single job definition, multiple interfaces
+- **Build-time safety** with comprehensive TypeScript checking
+
+### Worker Architecture
+- **Dedicated worker processes** for background job processing
+- **Dependency injection** integration with tsyringe
+- **Robust error handling** and logging throughout
+- **Health monitoring** and graceful shutdown patterns
+- **Horizontal scaling** support for multiple workers
 
 ## Search & Indexing
 
