@@ -16,8 +16,19 @@ export function ZodColumn(columnOptions: ColumnOptions, zodSchema: z.ZodTypeAny)
         const constructorFunc = (target as { constructor: new (...args: unknown[]) => unknown }).constructor;
         const existingMetadata: ZodValidationMetadata[] = Reflect.getMetadata(ZOD_METADATA_KEY, constructorFunc) || [];
 
+        // Check for duplicate property decorators
+        const propertyKeyStr = String(propertyKey);
+        const existingIndex = existingMetadata.findIndex((item) => item.propertyKey === propertyKeyStr);
+
+        if (existingIndex >= 0) {
+            throw new Error(
+                `Duplicate @ZodColumn decorator detected for property "${propertyKeyStr}" in entity ${constructorFunc.name}. ` +
+                    'Multiple decorators on the same property are not supported. Please use only one decorator per property.'
+            );
+        }
+
         existingMetadata.push({
-            propertyKey: String(propertyKey),
+            propertyKey: propertyKeyStr,
             zodSchema,
             columnOptions,
         });

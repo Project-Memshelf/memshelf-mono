@@ -47,8 +47,17 @@ export function createZodFromEntity<T>(
     }
 
     const shape: Record<string, z.ZodTypeAny> = {};
+    const seenKeys = new Set<string>();
 
     validationMetadata.forEach(({ propertyKey, zodSchema, columnOptions }) => {
+        if (seenKeys.has(propertyKey)) {
+            throw new Error(
+                `Duplicate Zod validation metadata detected for property "${propertyKey}" in entity ${entityClass.name}. ` +
+                    'Multiple decorators on the same property are not supported. Please merge or remove duplicates.'
+            );
+        }
+        seenKeys.add(propertyKey);
+
         let finalSchema = zodSchema;
 
         // Apply custom transforms if provided
@@ -58,7 +67,15 @@ export function createZodFromEntity<T>(
 
         // Apply TypeORM column constraints to Zod schema
         if (columnOptions) {
-            if (columnOptions.nullable && !zodSchema.isOptional() && !zodSchema.isNullable()) {
+            // Check if schema has these methods before calling them
+            const hasIsOptional = typeof zodSchema.isOptional === 'function';
+            const hasIsNullable = typeof zodSchema.isNullable === 'function';
+
+            if (
+                columnOptions.nullable &&
+                (!hasIsOptional || !zodSchema.isOptional()) &&
+                (!hasIsNullable || !zodSchema.isNullable())
+            ) {
                 finalSchema = finalSchema.nullable();
             }
 
