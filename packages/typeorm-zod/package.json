@@ -1,0 +1,45 @@
+{
+    "name": "@memshelf/typeorm-zod",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "version": "0.1.0",
+    "description": "Zero-duplication TypeORM + Zod integration with decorators",
+    "author": "Memshelf Team",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/your-org/memshelf-mono",
+        "directory": "packages/typeorm-zod"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "keywords": [
+        "typeorm",
+        "zod",
+        "validation",
+        "decorators",
+        "typescript",
+        "schema",
+        "dto"
+    ],
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "test": "bun test",
+        "lint": "biome check src",
+        "lint:fix": "biome check src --fix"
+    },
+    "dependencies": {
+        "reflect-metadata": "^0.2.2",
+        "typeorm": "^0.3.26",
+        "zod": "^3.25.76"
+    },
+    "devDependencies": {
+        "@types/bun": "^1.2.19",
+        "@types/node": "^24.3.0",
+        "typescript": "^5.0.0"
+    }
+}
