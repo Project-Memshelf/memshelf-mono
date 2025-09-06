@@ -1,15 +1,19 @@
+import { ZodProperty } from '@repo/typeorm-zod';
 import { Column, Entity, Index, OneToMany, type Relation } from 'typeorm';
+import { z } from 'zod';
 import { AppEntity } from '../core/AppEntity';
 import { NoteTagEntity } from './NoteTagEntity';
 import { WorkspaceTagEntity } from './WorkspaceTagEntity';
 
 @Entity()
 export class TagEntity extends AppEntity {
-    @Column({ length: 100 })
+    @Column({ type: 'varchar', length: 100 })
     @Index({ unique: true })
+    @ZodProperty(z.string().min(1).max(100))
     name: string;
 
-    @Column({ length: 100 })
+    @Column({ type: 'varchar', length: 100 })
+    @ZodProperty(z.string().min(1).max(100))
     displayName: string;
 
     @OneToMany(

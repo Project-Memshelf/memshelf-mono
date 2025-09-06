@@ -1,4 +1,6 @@
+import { ZodProperty } from '@repo/typeorm-zod';
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, type Relation, VersionColumn } from 'typeorm';
+import { z } from 'zod';
 import { AppEntity } from '../core/AppEntity';
 import { DiffEntity } from './DiffEntity';
 import { LinkEntity } from './LinkEntity';
@@ -9,6 +11,7 @@ import { WorkspaceEntity } from './WorkspaceEntity';
 export class NoteEntity extends AppEntity {
     @Column('uuid')
     @Index()
+    @ZodProperty(z.string().uuid())
     workspaceId: string;
 
     @ManyToOne(
@@ -21,14 +24,17 @@ export class NoteEntity extends AppEntity {
     @JoinColumn({ name: 'workspace_id' })
     workspace: Relation<WorkspaceEntity>;
 
-    @Column({ length: 500 })
+    @Column({ type: 'varchar', length: 500 })
     @Index()
+    @ZodProperty(z.string().min(1).max(500))
     title: string;
 
     @Column({ type: 'longtext', default: '' })
+    @ZodProperty(z.string().default(''))
     content: string;
 
     @VersionColumn()
+    @ZodProperty(z.number().int().min(0))
     version: number;
 
     @OneToMany(
