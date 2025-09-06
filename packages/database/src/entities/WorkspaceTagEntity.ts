@@ -1,10 +1,13 @@
+import { ZodProperty } from '@repo/typeorm-zod';
 import { CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryColumn, type Relation } from 'typeorm';
+import { z } from 'zod';
 import { TagEntity } from './TagEntity';
 import { WorkspaceEntity } from './WorkspaceEntity';
 
 @Entity()
 export class WorkspaceTagEntity {
     @PrimaryColumn('uuid')
+    @ZodProperty(z.string().uuid())
     workspaceId: string;
 
     @ManyToOne(
@@ -18,6 +21,7 @@ export class WorkspaceTagEntity {
     workspace: Relation<WorkspaceEntity>;
 
     @PrimaryColumn('uuid')
+    @ZodProperty(z.string().uuid())
     tagId: string;
 
     @ManyToOne(
@@ -31,5 +35,6 @@ export class WorkspaceTagEntity {
     tag: Relation<TagEntity>;
 
     @CreateDateColumn()
+    @ZodProperty(z.date())
     createdAt: Date;
 }

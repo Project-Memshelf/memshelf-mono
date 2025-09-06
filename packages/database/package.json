@@ -16,6 +16,7 @@
         "migration:revert": "bun --bun typeorm migration:revert -d src/dataSource.ts"
     },
     "dependencies": {
+        "@repo/typeorm-zod": "*",
         "@repo/shared-core": "*",
         "mysql2": "^3.12.0",
         "tsyringe": "^4.10.0",

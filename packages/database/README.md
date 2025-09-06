@@ -9,6 +9,8 @@ This package provides TypeORM entities, service classes, and database configurat
 ## Features
 
 - **Modern Entity Architecture**: Complete entity framework with base classes and common patterns
+- **Zod Integration**: Seamless TypeORM + Zod validation with `@repo/typeorm-zod`
+- **Auto-Generated Schemas**: Pre-built Zod schemas and TypeScript types for all entities
 - **Service Layer**: Comprehensive `BaseService` with business logic for data operations
 - **Type Safety**: Full TypeScript integration with proper type mapping
 - **Pagination**: Built-in pagination support with consistent interfaces
@@ -38,15 +40,19 @@ All entities extend the `AppEntity` base class which provides:
 @Entity()
 export class AppEntity {
     @PrimaryGeneratedColumn('uuid')
+    @ZodProperty(z.string().uuid())
     id: string;
     
     @CreateDateColumn()
+    @ZodProperty(z.date())
     createdAt: Date;
     
     @UpdateDateColumn()
+    @ZodProperty(z.date())
     updatedAt: Date;
     
     @DeleteDateColumn()
+    @ZodProperty(z.date().nullable())
     deletedAt: Date;
 }
 ```
@@ -56,11 +62,10 @@ export class AppEntity {
 ```typescript
 @Entity()
 export class UserEntity extends AppEntity {
-    @Column()
+    @ZodColumn({ type: 'varchar', length: 255 }, z.string().min(1).max(255))
     name: string;
     
-    @Column()
-    @Index({ unique: true })
+    @ZodColumn({ type: 'varchar', length: 255, unique: true }, z.string().email())
     email: string;
 }
 ```
@@ -172,14 +177,66 @@ bun run migration:create CreateUserTable
 bun run migration:generate UpdateUserEntity
 ```
 
+## Zod Integration & Generated Types
+
+### Auto-Generated Schema Types
+
+All entities automatically generate comprehensive Zod schemas and TypeScript types via the `entity-schema-types.ts` file:
+
+```typescript
+import { 
+    UserSchemas, 
+    type CreateUserDto, 
+    validateCreateUser 
+} from '@repo/database';
+
+// Each entity provides 5 schema variants: { full, create, update, patch, query }
+// Plus TypeScript types and validation functions for all CRUD operations
+const userData = validateCreateUser(requestBody);
+```
+
+### Generated Schema Variants
+
+Each entity automatically provides 5 schema variants:
+
+- **`full`** - Complete entity schema with all fields
+- **`create`** - Omits auto-generated fields (id, timestamps)
+- **`update`** - ID required, other fields optional
+- **`patch`** - All fields optional for partial updates
+- **`query`** - All fields optional for filtering/searching
+
+### API Validation Example
+
+```typescript
+import { validateCreateUser, validatePatchUser, type User } from '@repo/database';
+
+// Hono API route with validation
+app.post('/users', async (c) => {
+    try {
+        const userData = validateCreateUser(await c.req.json());
+        // userData is fully typed as CreateUserDto
+        
+        const user = userRepository.create(userData);
+        await userRepository.save(user);
+        return c.json({ success: true, user });
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return c.json({ errors: error.errors }, 400);
+        }
+        throw error;
+    }
+});
+```
+
 ## Type Safety
 
 The package provides comprehensive TypeScript support with:
 
+- **Auto-Generated Types**: All DTOs generated from entity Zod schemas
 - **Generic Service Interfaces**: Type-safe service methods
 - **Query Types**: Proper typing for query operations
 - **Entity Relationships**: Type-safe relationship definitions
-- **Validation**: Integration with Zod for runtime validation
+- **Runtime Validation**: Zod integration for API request validation
 
 ## Pagination
 
@@ -205,33 +262,42 @@ interface PaginatedResult<T> {
 
 ## Best Practices
 
-### Entity Design
+### Entity Design with Zod Validation
 
 ```typescript
 @Entity()
 export class ProductEntity extends AppEntity {
-    @Column()
+    @ZodColumn({ type: 'varchar', length: 255 }, z.string().min(1).max(255))
     name: string;
     
-    @Column('decimal', { precision: 10, scale: 2 })
+    @ZodColumn({ type: 'decimal', precision: 10, scale: 2 }, z.number().positive())
     price: number;
     
-    @Column({ default: true })
+    @ZodColumn({ type: 'boolean', default: true }, z.boolean().default(true))
     isActive: boolean;
     
     @Index()
-    @Column()
+    @ZodColumn({ type: 'varchar', length: 36 }, z.string().uuid())
     categoryId: string;
 }
 ```
 
-### Service Implementation
+### Service Implementation with Validation
 
 ```typescript
+import { validateCreateProduct, validatePatchProduct, type Product } from '@repo/database';
+
 @injectable()
 export class ProductService extends BaseService<ProductEntity> {
     constructor(@inject('ProductRepository') repo: Repository<ProductEntity>) {
         super(repo);
+    }
+    
+    async createValidatedProduct(data: unknown): Promise<Product> {
+        // Auto-validates and types the input data
+        const productData = validateCreateProduct(data);
+        const product = this.repository.create(productData);
+        return this.save(product);
     }
     
     async findActiveProducts(): Promise<ProductEntity[]> {

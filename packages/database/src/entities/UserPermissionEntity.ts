@@ -1,10 +1,13 @@
+import { ZodProperty } from '@repo/typeorm-zod';
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryColumn, type Relation } from 'typeorm';
+import { z } from 'zod';
 import { UserEntity } from './UserEntity';
 import { WorkspaceEntity } from './WorkspaceEntity';
 
 @Entity()
 export class UserPermissionEntity {
     @PrimaryColumn('uuid')
+    @ZodProperty(z.string().uuid())
     userId: string;
 
     @ManyToOne(
@@ -18,6 +21,7 @@ export class UserPermissionEntity {
     user: Relation<UserEntity>;
 
     @PrimaryColumn('uuid')
+    @ZodProperty(z.string().uuid())
     workspaceId: string;
 
     @ManyToOne(
@@ -31,8 +35,10 @@ export class UserPermissionEntity {
     workspace: Relation<WorkspaceEntity>;
 
     @Column({ default: false })
+    @ZodProperty(z.boolean().default(false))
     canWrite: boolean;
 
     @CreateDateColumn()
+    @ZodProperty(z.date())
     createdAt: Date;
 }
