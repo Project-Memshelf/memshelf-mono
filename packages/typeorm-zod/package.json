@@ -1,7 +1,9 @@
 {
     "name": "@repo/typeorm-zod",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "type": "module",
+    "module": "src/index.ts",
+    "main": "src/index.ts",
+    "types": "src/index.ts",
     "version": "0.1.0",
     "description": "Zero-duplication TypeORM + Zod integration with decorators",
     "author": "Memshelf Team",
@@ -26,16 +28,13 @@
         "dto"
     ],
     "scripts": {
-        "build": "tsc",
-        "dev": "tsc --watch",
-        "test": "bun test",
-        "lint": "biome check src",
-        "lint:fix": "biome check src --fix"
+        "typecheck": "tsc --noEmit"
     },
     "dependencies": {
         "reflect-metadata": "^0.2.2",
         "typeorm": "^0.3.26",
-        "zod": "^3.25.76"
+        "zod": "^3.25.76",
+        "@repo/typescript-config": "*"
     },
     "devDependencies": {
         "@types/bun": "^1.2.19",

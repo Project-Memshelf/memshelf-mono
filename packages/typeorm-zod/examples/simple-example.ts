@@ -2,7 +2,8 @@
  * Simple example showing @memshelf/typeorm-zod usage
  */
 
-import { createEntitySchemas, ZodProperty, z } from '../src/index';
+import { z } from 'zod';
+import { createEntitySchemas, ZodProperty } from '../src';
 
 // Simple entity with Zod validation
 class UserEntity {
