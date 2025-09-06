@@ -1,21 +1,28 @@
 import type { z } from 'zod';
-import 'reflect-metadata';
-import { ZOD_METADATA_KEY, type ZodValidationMetadata } from './metadata';
+import { addMetadata, hasPropertyMetadata } from '../metadata-store';
 
 /**
- * Simple decorator to associate Zod validation with a property
+ * Enhanced ZodProperty decorator using WeakMap-based metadata storage
+ * This prevents metadata pollution between different entity classes
  * Usage: @ZodProperty(z.string().min(1).max(255))
  */
 export function ZodProperty(zodSchema: z.ZodTypeAny) {
     return (target: object, propertyKey: string | symbol) => {
         const constructorFunc = (target as { constructor: new (...args: unknown[]) => unknown }).constructor;
-        const existingMetadata: ZodValidationMetadata[] = Reflect.getMetadata(ZOD_METADATA_KEY, constructorFunc) || [];
+        const propertyKeyStr = String(propertyKey);
 
-        existingMetadata.push({
-            propertyKey: String(propertyKey),
+        // Check for duplicate property decorators using WeakMap storage
+        if (hasPropertyMetadata(constructorFunc, propertyKeyStr)) {
+            throw new Error(
+                `Duplicate @ZodProperty decorator detected for property "${propertyKeyStr}" in entity ${String(constructorFunc.name)}. ` +
+                    'Multiple decorators on the same property are not supported. Please use only one decorator per property.'
+            );
+        }
+
+        // Add metadata using WeakMap storage
+        addMetadata(constructorFunc, {
+            propertyKey: propertyKeyStr,
             zodSchema,
         });
-
-        Reflect.defineMetadata(ZOD_METADATA_KEY, existingMetadata, constructorFunc);
     };
 }
