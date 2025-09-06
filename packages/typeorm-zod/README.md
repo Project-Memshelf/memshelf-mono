@@ -1,115 +1,127 @@
-# @memshelf/typeorm-zod
+# @repo/typeorm-zod
 
-**Zero-duplication TypeORM + Zod integration with decorators.**
+Seamless integration between TypeORM entities and Zod validation using WeakMap-based metadata storage to prevent cross-entity pollution.
 
-Eliminate the need for separate entity definitions, validation schemas, and TypeScript types. Define once, use everywhere.
+## Features
 
-## Problem Solved
+- **Pollution-Free Metadata Storage**: WeakMap-based metadata storage prevents entity metadata pollution
+- **Inheritance-Aware Schema Generation**: Includes base class properties automatically  
+- **Circular Dependency Safe**: Proper handling of circular dependencies between entities
+- **Property Name Conflict Resolution**: Different entities can have properties with the same name
+- **Automatic Schema Variants**: Create/update/patch schema variants generated automatically
+- **TypeORM Integration**: Seamless integration with existing TypeORM decorators
+- **Production Ready**: Comprehensive error handling and validation
 
-Before `@memshelf/typeorm-zod`, you had to maintain three separate definitions:
+## Quick Start
 
-```typescript
-// 1. TypeORM Entity
-@Entity()
-class User {
-  @Column({ length: 255 })
-  name: string;
-  
-  @Column({ unique: true })
-  apiKey: string;
-}
-
-// 2. Zod Schema (duplicated structure + validation)
-const CreateUserSchema = z.object({
-  name: z.string().min(1).max(255),
-  apiKey: z.string().min(10)
-});
-
-// 3. TypeScript Types (duplicated again)
-type CreateUserDto = {
-  name: string;
-  apiKey: string;
-};
-```
-
-## Solution
-
-With `@memshelf/typeorm-zod`, you define once and get everything:
+With `@repo/typeorm-zod`, you define validation once and get comprehensive schemas:
 
 ```typescript
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { ZodProperty, ZodColumn, createEntitySchemas } from '@repo/typeorm-zod';
+import { z } from 'zod';
+
 @Entity()
-class User extends BaseEntity {
-  @ZodProperty(z.string().min(1, 'Name required').max(255))
-  @Column({ length: 255 })
-  name: string;
-  
-  @ZodProperty(z.string().min(10, 'API key too short'))
-  @Column({ unique: true })
-  apiKey: string;
+export class User {
+    @PrimaryGeneratedColumn('uuid')
+    @ZodProperty(z.string().uuid())
+    id: string;
+
+    @ZodColumn({ type: 'varchar', length: 255 }, z.string().min(1).max(255))
+    name: string;
+
+    @ZodColumn({ type: 'varchar', length: 255, unique: true }, z.string().email())
+    email: string;
+
+    @ZodColumn({ type: 'int', nullable: true }, z.number().int().positive().nullable())
+    age?: number;
 }
 
-// Auto-generate all schemas and types
-const UserSchemas = createEntitySchemas(User);
-type CreateUserDto = z.infer<typeof UserSchemas.create>;
+// Generate comprehensive schema collection
+const userSchemas = createEntitySchemas(User);
+// Available: full, create, update, patch, query schemas
 ```
 
 ## Installation
 
 ```bash
-bun add @memshelf/typeorm-zod
+bun add @repo/typeorm-zod
 ```
 
-## Usage
-
-### Basic Setup
+### Inheritance Support
 
 ```typescript
-import { ZodProperty, createEntitySchemas, z } from '@memshelf/typeorm-zod';
+import { CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
-@Entity()
-class User {
-  @ZodProperty(z.string().uuid())
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+// Base entity class
+export abstract class AppEntity {
+    @PrimaryGeneratedColumn('uuid')
+    @ZodProperty(z.string().uuid())
+    id: string;
 
-  @ZodProperty(z.string().min(1).max(255))
-  @Column({ length: 255 })
-  name: string;
+    @CreateDateColumn()
+    @ZodProperty(z.date())
+    createdAt: Date;
 
-  @ZodProperty(z.string().email().optional())
-  @Column({ nullable: true })
-  email?: string;
-
-  @ZodProperty(z.boolean().default(true))
-  @Column({ default: true })
-  isActive: boolean;
+    @UpdateDateColumn()
+    @ZodProperty(z.date())
+    updatedAt: Date;
 }
 
-// Generate all schema variants
-const UserSchemas = createEntitySchemas(User);
+// Child entity inherits validation
+@Entity()
+export class Product extends AppEntity {
+    @ZodColumn({ type: 'varchar', length: 255 }, z.string().min(1))
+    name: string;
+
+    @ZodColumn({ type: 'decimal', precision: 10, scale: 2 }, z.number().positive())
+    price: number;
+}
+
+// Automatically includes base class properties
+const productSchemas = createEntitySchemas(Product);
+// Schemas include: id, createdAt, updatedAt, name, price
 ```
 
-### Available Schemas
+### Available Schema Variants
 
 The `createEntitySchemas()` function generates 5 schema variants:
 
 ```typescript
-const UserSchemas = createEntitySchemas(User);
+const userSchemas = createEntitySchemas(User);
 
 // Full schema - includes all fields
-UserSchemas.full;
+userSchemas.full;
 
 // Create schema - omits id, createdAt, updatedAt, deletedAt
-UserSchemas.create;
+userSchemas.create;
 
 // Update schema - id required, everything else optional
-UserSchemas.update;
+userSchemas.update;
 
 // Patch schema - all fields optional
-UserSchemas.patch;
+userSchemas.patch;
 
 // Query schema - all fields optional (for filtering)
-UserSchemas.query;
+userSchemas.query;
+```
+
+### Advanced Usage with Custom Options
+
+```typescript
+const userSchemas = createEntitySchemas(User, {
+    // Additional fields to omit from create schema
+    omitFromCreate: ['internalId'],
+    
+    // Additional fields to omit from update schema
+    omitFromUpdate: ['email'], // Email cannot be updated
+    
+    // Custom field transformations
+    transforms: {
+        email: (schema) => schema.toLowerCase().trim(),
+        age: (schema) => schema.min(13).max(120) // Add age constraints
+    }
+});
 ```
 
 ### Type Inference
@@ -117,37 +129,51 @@ UserSchemas.query;
 All TypeScript types are automatically inferred:
 
 ```typescript
-type CreateUserDto = z.infer<typeof UserSchemas.create>;
-type UpdateUserDto = z.infer<typeof UserSchemas.update>;
-type UserQueryDto = z.infer<typeof UserSchemas.query>;
+type CreateUserDto = z.infer<typeof userSchemas.create>;
+type UpdateUserDto = z.infer<typeof userSchemas.update>;
+type UserQueryDto = z.infer<typeof userSchemas.query>;
 
 // Perfect type safety
 const createUser = (data: CreateUserDto) => {
-  // data.name is string
-  // data.email is string | undefined  
-  // data.isActive is boolean (with default)
+    // data.name is string
+    // data.email is string | undefined  
+    // data is fully typed and validated
 };
 ```
 
-### API Validation
-
-Use in your API routes for automatic validation:
+### API Route Validation
 
 ```typescript
-// Express example
-app.post('/users', (req, res) => {
-  try {
-    const validatedData = UserSchemas.create.parse(req.body);
-    // validatedData is fully typed and validated
-    const user = userRepository.create(validatedData);
-    await userRepository.save(user);
-    res.json(user);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ errors: error.errors });
+import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+
+const app = new Hono();
+
+// Create user endpoint
+app.post('/users', 
+    zValidator('json', userSchemas.create),
+    async (c) => {
+        const userData = c.req.valid('json');
+        // userData is fully typed and validated
+        
+        const user = userRepository.create(userData);
+        await userRepository.save(user);
+        
+        return c.json({ success: true, user });
     }
-  }
-});
+);
+
+// Update user endpoint  
+app.patch('/users/:id',
+    zValidator('json', userSchemas.patch),
+    async (c) => {
+        const updateData = c.req.valid('json');
+        const userId = c.req.param('id');
+        
+        await userRepository.update(userId, updateData);
+        return c.json({ success: true });
+    }
+);
 ```
 
 ## API Reference

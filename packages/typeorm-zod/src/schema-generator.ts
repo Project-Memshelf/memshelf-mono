@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import 'reflect-metadata';
-import { ZOD_METADATA_KEY, type ZodValidationMetadata } from './decorators';
+import { getMetadata } from './metadata-store';
+
+type ConstructorFunction = new (...args: unknown[]) => unknown;
 
 /**
  * Schema generation options
@@ -31,33 +32,59 @@ export interface EntitySchemas<_T = Record<string, unknown>> {
 }
 
 /**
- * Extract Zod schema from entity class with decorators
+ * Get all metadata from entity class including inheritance chain
+ */
+function getAllMetadata(
+    entityClass: ConstructorFunction
+): Array<{ propertyKey: string; zodSchema: z.ZodTypeAny; columnOptions?: unknown }> {
+    const allMetadata: Array<{ propertyKey: string; zodSchema: z.ZodTypeAny; columnOptions?: unknown }> = [];
+    const seenProperties = new Set<string>();
+
+    // Walk up the prototype chain to collect metadata from all classes
+    let currentClass: ConstructorFunction | null = entityClass;
+
+    while (currentClass) {
+        const metadata = getMetadata(currentClass);
+
+        // Add metadata from current class (child properties override parent properties)
+        metadata.forEach((item) => {
+            if (!seenProperties.has(item.propertyKey)) {
+                allMetadata.push(item);
+                seenProperties.add(item.propertyKey);
+            }
+        });
+
+        // Move to parent class
+        currentClass = Object.getPrototypeOf(currentClass);
+
+        // Stop at Object.prototype or Function.prototype
+        if (!currentClass || currentClass === Object || (currentClass as unknown) === Function) {
+            break;
+        }
+    }
+
+    return allMetadata;
+}
+
+/**
+ * Extract Zod schema from entity class with decorators using WeakMap storage and inheritance
  */
 export function createZodFromEntity<T>(
     entityClass: new () => T,
     options: SchemaGenerationOptions = {}
 ): z.ZodObject<z.ZodRawShape> {
-    const validationMetadata: ZodValidationMetadata[] = Reflect.getMetadata(ZOD_METADATA_KEY, entityClass) || [];
+    const validationMetadata = getAllMetadata(entityClass);
 
     if (validationMetadata.length === 0) {
         throw new Error(
-            `No Zod validation metadata found for entity ${entityClass.name}. ` +
+            `No Zod validation metadata found for entity ${String(entityClass.name)}. ` +
                 'Make sure to use @ZodProperty or @ZodColumn decorators on entity properties.'
         );
     }
 
     const shape: Record<string, z.ZodTypeAny> = {};
-    const seenKeys = new Set<string>();
 
     validationMetadata.forEach(({ propertyKey, zodSchema, columnOptions }) => {
-        if (seenKeys.has(propertyKey)) {
-            throw new Error(
-                `Duplicate Zod validation metadata detected for property "${propertyKey}" in entity ${entityClass.name}. ` +
-                    'Multiple decorators on the same property are not supported. Please merge or remove duplicates.'
-            );
-        }
-        seenKeys.add(propertyKey);
-
         let finalSchema = zodSchema;
 
         // Apply custom transforms if provided
@@ -67,21 +94,18 @@ export function createZodFromEntity<T>(
 
         // Apply TypeORM column constraints to Zod schema
         if (columnOptions) {
-            // Check if schema has these methods before calling them
-            const hasIsOptional = typeof zodSchema.isOptional === 'function';
-            const hasIsNullable = typeof zodSchema.isNullable === 'function';
+            const colOptions = columnOptions as Record<string, unknown>;
+            // Use proper Zod type guards for reliable type checking
+            const isOptionalSchema = zodSchema instanceof z.ZodOptional;
+            const isNullableSchema = zodSchema instanceof z.ZodNullable;
 
-            if (
-                columnOptions.nullable &&
-                (!hasIsOptional || !zodSchema.isOptional()) &&
-                (!hasIsNullable || !zodSchema.isNullable())
-            ) {
+            if (colOptions.nullable && !isOptionalSchema && !isNullableSchema) {
                 finalSchema = finalSchema.nullable();
             }
 
             // Add default values from TypeORM to Zod (if not already present)
-            if (columnOptions.default !== undefined && !(zodSchema instanceof z.ZodDefault)) {
-                finalSchema = finalSchema.default(columnOptions.default);
+            if (colOptions.default !== undefined && !(zodSchema instanceof z.ZodDefault)) {
+                finalSchema = finalSchema.default(colOptions.default);
             }
         }
 
@@ -92,7 +116,7 @@ export function createZodFromEntity<T>(
 }
 
 /**
- * Create comprehensive schema collection from entity class
+ * Create comprehensive schema collection from entity class using WeakMap storage and inheritance
  */
 export function createEntitySchemas<T>(
     entityClass: new () => T,

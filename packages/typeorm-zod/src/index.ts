@@ -1,30 +1,37 @@
 /**
- * @memshelf/typeorm-zod
+ * TypeORM-Zod Integration - Production Ready
  *
- * Zero-duplication TypeORM + Zod integration with decorators.
- * Eliminate the need for separate entity definitions, validation schemas, and TypeScript types.
+ * This package provides seamless integration between TypeORM entities and Zod validation
+ * using WeakMap-based metadata storage to prevent cross-entity pollution.
+ *
+ * Features:
+ * - WeakMap-based metadata storage prevents entity metadata pollution
+ * - Inheritance-aware schema generation includes base class properties
+ * - Proper handling of circular dependencies
+ * - Property name conflicts between entities are resolved
+ * - Automatic create/update/patch schema variants
  */
 
-// Re-export commonly used zod types for convenience
-export { z } from 'zod';
-
-// Main decorators
-export { ZOD_METADATA_KEY, ZodColumn, ZodProperty, type ZodValidationMetadata } from './decorators';
-export type {
-    EntitySchemas,
-    SchemaGenerationOptions,
-} from './schema-generator';
-// Schema generation
+// Metadata types
+export { ZOD_METADATA_KEY, type ZodValidationMetadata } from './decorators/metadata';
+export { ZodColumn } from './decorators/zod-column';
+// Decorators (production-ready, pollution-free)
+export { ZodProperty } from './decorators/zod-property';
+// Metadata storage (WeakMap-based, pollution-free)
+export {
+    addMetadata,
+    debugMetadataStore,
+    getMetadata,
+    getPropertyMetadata,
+    hasPropertyMetadata,
+    setMetadata,
+} from './metadata-store';
+// Schema generators (inheritance-aware)
 export {
     createCreateSchema,
     createEntitySchemas,
     createUpdateSchema,
     createZodFromEntity,
+    type EntitySchemas,
+    type SchemaGenerationOptions,
 } from './schema-generator';
-// Types and utilities
-export type {
-    BaseEntity,
-    CommonEntitySchemas,
-    EntityDTOs,
-    InferEntitySchemas,
-} from './types';
