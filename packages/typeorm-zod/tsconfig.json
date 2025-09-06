@@ -1,22 +1,3 @@
 {
-    "compilerOptions": {
-        "outDir": "./dist",
-        "rootDir": "./src",
-        "declaration": true,
-        "declarationMap": true,
-        "sourceMap": true,
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
-        "strict": true,
-        "target": "ES2020",
-        "module": "CommonJS",
-        "moduleResolution": "node",
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true,
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "strictPropertyInitialization": false
-    },
-    "include": ["src/**/*"],
-    "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.spec.ts"]
+    "extends": "@repo/typescript-config/tsconfig.decorators.json"
 }

@@ -3,7 +3,8 @@
  */
 
 import { Column, Entity, Index, Like, OneToMany, type Relation } from 'typeorm';
-import { createEntitySchemas, ZodProperty, z } from '../src/index';
+import { z } from 'zod';
+import { createEntitySchemas, ZodProperty } from '../src';
 
 // Mock AppEntity for this example (since we can't import from database package)
 class AppEntity {
