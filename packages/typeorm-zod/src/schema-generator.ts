@@ -95,15 +95,11 @@ export function createZodFromEntity<T>(
         // Apply TypeORM column constraints to Zod schema
         if (columnOptions) {
             const colOptions = columnOptions as Record<string, unknown>;
-            // Check if schema has these methods before calling them
-            const hasIsOptional = typeof zodSchema.isOptional === 'function';
-            const hasIsNullable = typeof zodSchema.isNullable === 'function';
+            // Use proper Zod type guards for reliable type checking
+            const isOptionalSchema = zodSchema instanceof z.ZodOptional;
+            const isNullableSchema = zodSchema instanceof z.ZodNullable;
 
-            if (
-                colOptions.nullable &&
-                (!hasIsOptional || !zodSchema.isOptional()) &&
-                (!hasIsNullable || !zodSchema.isNullable())
-            ) {
+            if (colOptions.nullable && !isOptionalSchema && !isNullableSchema) {
                 finalSchema = finalSchema.nullable();
             }
 
