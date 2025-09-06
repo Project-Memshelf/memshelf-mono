@@ -11,16 +11,18 @@
 
 import { createEntitySchemas } from '@repo/typeorm-zod';
 import type { z } from 'zod';
-import { DiffEntity } from './entities/DiffEntity';
-import { LinkEntity } from './entities/LinkEntity';
-import { NoteEntity } from './entities/NoteEntity';
-import { NoteTagEntity } from './entities/NoteTagEntity';
-import { TagEntity } from './entities/TagEntity';
 // Entity imports
-import { UserEntity } from './entities/UserEntity';
-import { UserPermissionEntity } from './entities/UserPermissionEntity';
-import { WorkspaceEntity } from './entities/WorkspaceEntity';
-import { WorkspaceTagEntity } from './entities/WorkspaceTagEntity';
+import {
+    DiffEntity,
+    LinkEntity,
+    NoteEntity,
+    NoteTagEntity,
+    TagEntity,
+    UserEntity,
+    UserPermissionEntity,
+    WorkspaceEntity,
+    WorkspaceTagEntity,
+} from './entities';
 
 // Generated schema collections
 export const UserSchemas = createEntitySchemas(UserEntity);
