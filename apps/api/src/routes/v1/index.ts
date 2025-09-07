@@ -8,6 +8,7 @@ import {
     TagsController,
     WorkspacesController,
 } from '../../controllers';
+import { authMiddleware } from '../../middleware/auth';
 
 const v1Routes = new Hono();
 
@@ -19,6 +20,8 @@ const noteTagsController = container.resolve(NoteTagsController);
 const linksController = container.resolve(LinksController);
 const diffsController = container.resolve(DiffsController);
 
+// Apply auth middleware to all routes
+v1Routes.use('*', authMiddleware);
 // Notes routes
 v1Routes.get('/notes', (c) => notesController.list(c));
 v1Routes.get('/notes/:id', (c) => notesController.getById(c));
