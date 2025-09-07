@@ -31,12 +31,21 @@ const { server, logger, dataSource } = await startServer();
 process.on('SIGTERM', async () => {
     logger.info('SIGTERM received, shutting down gracefully');
     await server.stop();
-    await closeDatabase(dataSource);
+    try {
+        await closeDatabase(dataSource);
+    } catch (err) {
+        logger.error(err as Error, 'Error closing database during shutdown');
+    }
     process.exit(0);
 });
 
 process.on('SIGINT', async () => {
     logger.info('SIGINT received, shutting down gracefully');
     await server.stop();
+    try {
+        await closeDatabase(dataSource);
+    } catch (err) {
+        logger.error(err as Error, 'Error closing database during shutdown');
+    }
     process.exit(0);
 });

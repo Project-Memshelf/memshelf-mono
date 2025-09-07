@@ -80,7 +80,9 @@ export class NotesController extends BaseController {
         }
         await this.validateWorkspaceAccess(user.id, note.workspaceId, 'write');
 
-        const version = updateDto.content && updateDto.content !== note.content ? note.version + 1 : note.version;
+        const contentChanged = updateDto.content && updateDto.content !== note.content;
+        const titleChanged = updateDto.title && updateDto.title !== note.title;
+        const version = contentChanged || titleChanged ? note.version + 1 : note.version;
 
         await this.notesDbService.update(noteId, { ...updateDto, version });
 
