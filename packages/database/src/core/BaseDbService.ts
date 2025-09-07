@@ -7,7 +7,7 @@ import type { QueryDeepPartialEntity } from './types';
 export class BaseDbService<T extends AppEntity> implements DbServiceInterface<T> {
     constructor(protected readonly repo: Repository<T>) {}
 
-    protected get repository(): Repository<T> {
+    public get repository(): Repository<T> {
         return this.repo;
     }
 
@@ -22,7 +22,7 @@ export class BaseDbService<T extends AppEntity> implements DbServiceInterface<T>
         return this.repo.findOneByOrFail({ id } as FindOptionsWhere<T>);
     }
 
-    async findMany(where: FindOptionsWhere<T>): Promise<T[]> {
+    async findMany(where: FindOptionsWhere<T> | FindOptionsWhere<T>[]): Promise<T[]> {
         return this.repo.find({ where });
     }
 

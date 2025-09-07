@@ -12,14 +12,21 @@ Memshelf uses a **simple API key-based authentication system** designed specific
 Every request must include a valid API key in the `Authorization` header using the Bearer token format:
 
 ```http
-Authorization: Bearer ms_1234567890abcdef1234567890abcdef12345678
+Authorization: Bearer dev_admin_key_0123456789abcdef0123456789abcdef01234567
 ```
 
 **API Key Format:**
-- **Prefix**: `ms_` (memshelf identifier)
-- **Key Body**: 40 hexadecimal characters
-- **Total Length**: 43 characters
-- **Example**: `ms_1234567890abcdef1234567890abcdef12345678`
+- **Development Keys**: Prefixed with `dev_` for development/testing
+- **Key Body**: 64 hexadecimal characters  
+- **Total Length**: 68 characters (including prefix)
+- **Example**: `dev_admin_key_0123456789abcdef0123456789abcdef01234567`
+
+**Development API Keys:**
+```
+Admin User:     dev_admin_key_0123456789abcdef0123456789abcdef01234567
+John Developer: dev_john_key_fedcba9876543210fedcba9876543210fedcba98
+Jane Designer:  dev_jane_key_abcdef0123456789abcdef0123456789abcdef01
+```
 
 ### API Key Properties
 - **Long-lived**: No automatic expiration (unlike JWT tokens)
@@ -43,11 +50,12 @@ Authorization: Bearer ms_1234567890abcdef1234567890abcdef12345678
 ### User Properties
 ```json
 {
-  "id": "user-uuid",
-  "name": "AI Assistant Name",
-  "api_key": "ms_1234567890abcdef1234567890abcdef12345678",
-  "created_at": "2025-09-01T10:00:00Z",
-  "updated_at": "2025-09-01T10:00:00Z"
+  "id": "00000000-0000-4000-8000-000000000001",
+  "name": "Admin User",
+  "apiKey": "dev_admin_key_0123456789abcdef0123456789abcdef01234567",
+  "createdAt": "2025-09-06T16:36:03.000Z",
+  "updatedAt": "2025-09-06T16:36:03.000Z",
+  "deletedAt": null
 }
 ```
 
@@ -233,20 +241,22 @@ sequenceDiagram
 **Invalid API Key** (401):
 ```json
 {
-  "success": false,
-  "error": "unauthorized",
-  "message": "Invalid or missing API key",
-  "code": "AUTH_001"
+  "error": {
+    "code": 401,
+    "message": "Authentication required",
+    "timestamp": "2025-09-07T01:25:00.000Z"
+  }
 }
 ```
 
-**Revoked API Key** (401):
+**Missing API Key** (401):
 ```json
 {
-  "success": false,
-  "error": "unauthorized", 
-  "message": "API key has been revoked",
-  "code": "AUTH_002"
+  "error": {
+    "code": 401,
+    "message": "Authentication required",
+    "timestamp": "2025-09-07T01:25:00.000Z"
+  }
 }
 ```
 
@@ -254,20 +264,22 @@ sequenceDiagram
 **Workspace Access Denied** (403):
 ```json
 {
-  "success": false,
-  "error": "forbidden",
-  "message": "Access denied to workspace",
-  "code": "NOTE_002"
+  "error": {
+    "code": 403,
+    "message": "Forbidden",
+    "timestamp": "2025-09-07T01:25:00.000Z"
+  }
 }
 ```
 
 **Write Permission Required** (403):
 ```json
 {
-  "success": false,
-  "error": "forbidden",
-  "message": "Write access required for this operation", 
-  "code": "AUTH_003"
+  "error": {
+    "code": 403,
+    "message": "Forbidden",
+    "timestamp": "2025-09-07T01:25:00.000Z"
+  }
 }
 ```
 

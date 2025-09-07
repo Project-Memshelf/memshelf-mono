@@ -1,3 +1,4 @@
+import type { User } from '@repo/database';
 import { AppLogger } from '@repo/shared-services';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -10,6 +11,7 @@ import { appRoutes } from './routes';
 type AppEnv = {
     Variables: {
         requestId: string;
+        currentUser?: User;
     };
 };
 

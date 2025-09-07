@@ -4,9 +4,9 @@
 
 The Memshelf API is a **RESTful HTTP API** built with Hono and TypeScript. All requests and responses use JSON format with comprehensive validation via Zod schemas.
 
-**Base URL**: `https://api.memshelf.com` (or your self-hosted instance)
+**Base URL**: `http://localhost:4001` (development) / `https://api.memshelf.com` (production)
 **API Version**: `v1`
-**Full Base URL**: `https://api.memshelf.com/api/v1`
+**Full Base URL**: `http://localhost:4001/api/v1` (development)
 
 ---
 
@@ -22,11 +22,22 @@ Authorization: Bearer <your-api-key>
 **Error Response** (401 Unauthorized):
 ```json
 {
-  "error": "unauthorized",
-  "message": "Invalid or missing API key",
-  "code": "AUTH_001"
+  "error": {
+    "code": 401,
+    "message": "Authentication required",
+    "timestamp": "2025-09-07T01:20:00.000Z"
+  }
 }
 ```
+
+**Development API Keys** (for testing - replace YOUR_API_KEY in examples):
+```
+Admin User:    dev_admin_key_0123456789abcdef0123456789abcdef01234567
+John Developer: dev_john_key_fedcba9876543210fedcba9876543210fedcba98
+Jane Designer:  dev_jane_key_abcdef0123456789abcdef0123456789abcdef01
+```
+
+> **Note**: Replace `YOUR_API_KEY` in curl examples with one of the development keys above for testing.
 
 ---
 
@@ -36,9 +47,9 @@ Authorization: Bearer <your-api-key>
 ```json
 {
   "success": true,
-  "data": { ... },
+  "data": {},
   "meta": {
-    "timestamp": "2025-09-01T12:00:00Z",
+    "timestamp": "2025-09-07T01:25:00.000Z",
     "version": "1.0.0"
   }
 }
@@ -47,14 +58,10 @@ Authorization: Bearer <your-api-key>
 ### Error Response
 ```json
 {
-  "success": false,
-  "error": "error_type",
-  "message": "Human readable error message",
-  "code": "ERROR_CODE",
-  "details": { ... },
-  "meta": {
-    "timestamp": "2025-09-01T12:00:00Z",
-    "version": "1.0.0"
+  "error": {
+    "code": 400,
+    "message": "Human readable error message",
+    "timestamp": "2025-09-07T01:25:00.000Z"
   }
 }
 ```
@@ -63,17 +70,17 @@ Authorization: Bearer <your-api-key>
 ```json
 {
   "success": true,
-  "data": [...],
+  "data": [],
   "pagination": {
     "page": 1,
-    "limit": 20,
+    "limit": 10,
     "total": 150,
-    "pages": 8,
+    "totalPages": 15,
     "hasNext": true,
     "hasPrev": false
   },
   "meta": {
-    "timestamp": "2025-09-01T12:00:00Z",
+    "timestamp": "2025-09-07T01:25:00.000Z",
     "version": "1.0.0"
   }
 }
@@ -82,6 +89,56 @@ Authorization: Bearer <your-api-key>
 ---
 
 ## Notes Endpoints
+
+### GET /api/v1/notes
+List notes in a workspace.
+
+**Query Parameters:**
+- `workspaceId` (required) - UUID of the workspace
+- `page` (optional) - Page number (default: 1)
+- `limit` (optional) - Items per page (default: 10)
+
+**Example Request:**
+```bash
+curl -X GET "http://localhost:4001/api/v1/notes?workspaceId=00000000-0000-4000-8000-000000000011" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "00000000-0000-4000-8000-000000000036",
+      "createdAt": "2025-09-06T16:36:03.000Z",
+      "updatedAt": "2025-09-06T16:36:03.000Z",
+      "deletedAt": null,
+      "workspaceId": "00000000-0000-4000-8000-000000000011",
+      "title": "Database Schema Design",
+      "content": "# Database Schema Overview...",
+      "version": 1
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 3,
+    "totalPages": 1,
+    "hasNext": false,
+    "hasPrev": false
+  },
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
+  }
+}
+```
+
+**Error Responses:**
+- `400` - workspaceId is required
+- `401` - Authentication required
+- `403` - Forbidden (no workspace access)
 
 ### GET /api/v1/notes/:id
 Retrieve a specific note by ID.
@@ -94,22 +151,26 @@ Retrieve a specific note by ID.
 {
   "success": true,
   "data": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "title": "Meeting Notes - Project Alpha",
-    "content": "# Meeting Summary\n\n- Discussed roadmap...",
-    "workspace_id": "123e4567-e89b-12d3-a456-426614174000",
-    "tags": ["meeting", "project-alpha"],
-    "workspace_tags": ["work", "2025"],
-    "created_at": "2025-09-01T10:00:00Z",
-    "updated_at": "2025-09-01T11:30:00Z",
-    "version": 3
+    "id": "00000000-0000-4000-8000-000000000036",
+    "createdAt": "2025-09-06T16:36:03.000Z",
+    "updatedAt": "2025-09-06T16:36:03.000Z",
+    "deletedAt": null,
+    "workspaceId": "00000000-0000-4000-8000-000000000011",
+    "title": "Database Schema Design",
+    "content": "# Database Schema Overview...",
+    "version": 1
+  },
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
   }
 }
 ```
 
-**Error Codes:**
-- `NOTE_001` - Note not found
-- `NOTE_002` - Access denied to workspace
+**Error Responses:**
+- `401` - Authentication required
+- `403` - Forbidden (no workspace access)
+- `404` - Note not found
 
 ---
 
@@ -119,10 +180,9 @@ Create a new note.
 **Request Body:**
 ```json
 {
+  "workspaceId": "00000000-0000-4000-8000-000000000011",
   "title": "New Note Title",
-  "content": "# Initial Content\n\nNote body here...",
-  "workspace_id": "123e4567-e89b-12d3-a456-426614174000",
-  "tags": ["tag1", "tag2"]
+  "content": "# Initial Content\n\nNote body here..."
 }
 ```
 
@@ -131,34 +191,29 @@ Create a new note.
 {
   "success": true,
   "data": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "id": "new-note-uuid",
+    "workspaceId": "00000000-0000-4000-8000-000000000011",
     "title": "New Note Title",
     "content": "# Initial Content\n\nNote body here...",
-    "workspace_id": "123e4567-e89b-12d3-a456-426614174000",
-    "tags": ["tag1", "tag2"],
-    "workspace_tags": ["work", "2025"],
-    "created_at": "2025-09-01T12:00:00Z",
-    "updated_at": "2025-09-01T12:00:00Z",
-    "version": 1
+    "version": 1,
+    "createdAt": "2025-09-07T01:25:00.000Z",
+    "updatedAt": "2025-09-07T01:25:00.000Z",
+    "deletedAt": null
+  },
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
   }
 }
 ```
 
-**Validation Rules:**
-- `title`: 1-500 characters, required
-- `content`: 0-1,000,000 characters, optional (defaults to empty)
-- `workspace_id`: Valid UUID, required
-- `tags`: Array of valid tag names, optional
+**Error Responses:**
+- `400` - Validation error (missing workspaceId, title, etc.)
+- `401` - Authentication required  
+- `403` - Forbidden (no write access to workspace)
 
-**Error Codes:**
-- `NOTE_003` - Invalid workspace ID
-- `NOTE_004` - Workspace access denied
-- `VALIDATION_001` - Invalid request data
-
----
-
-### PATCH /api/v1/notes/:id/diff
-Apply a diff to an existing note.
+### PUT /api/v1/notes/:id
+Update an existing note.
 
 **Parameters:**
 - `id` (path) - UUID of the note
@@ -166,10 +221,8 @@ Apply a diff to an existing note.
 **Request Body:**
 ```json
 {
-  "position": 45,
-  "length": 12,
-  "new_text": "updated content",
-  "version": 3
+  "title": "Updated Note Title",
+  "content": "# Updated Content\n\nModified content here..."
 }
 ```
 
@@ -178,46 +231,48 @@ Apply a diff to an existing note.
 {
   "success": true,
   "data": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "title": "Meeting Notes - Project Alpha",
-    "content": "# Meeting Summary\n\n- Discussed updated content...",
-    "workspace_id": "123e4567-e89b-12d3-a456-426614174000",
-    "tags": ["meeting", "project-alpha"],
-    "workspace_tags": ["work", "2025"],
-    "created_at": "2025-09-01T10:00:00Z",
-    "updated_at": "2025-09-01T12:15:00Z",
-    "version": 4,
-    "diff_applied": {
-      "id": "diff-uuid-here",
-      "position": 45,
-      "length": 12,
-      "new_text": "updated content",
-      "created_at": "2025-09-01T12:15:00Z"
-    }
+    "id": "note-uuid",
+    "title": "Updated Note Title", 
+    "content": "# Updated Content\n\nModified content here...",
+    "version": 2
+  },
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
   }
 }
 ```
 
-**Validation Rules:**
-- `position`: Integer >= 0, required
-- `length`: Integer >= 0, required  
-- `new_text`: String, optional (defaults to empty for deletion)
-- `version`: Integer, required for conflict detection
+**Error Responses:**
+- `401` - Authentication required
+- `403` - Forbidden (no write access)
+- `404` - Note not found
 
-**Error Codes:**
-- `NOTE_005` - Version conflict (note updated since last fetch)
-- `NOTE_006` - Invalid diff position/length
-- `NOTE_007` - Diff would exceed content limits
-
----
-
-### GET /api/v1/notes/:id/diffs
-List all diffs for a note.
+### DELETE /api/v1/notes/:id
+Soft delete a note.
 
 **Parameters:**
 - `id` (path) - UUID of the note
+
+**Response:**
+```
+204 No Content
+```
+
+**Error Responses:**
+- `401` - Authentication required
+- `403` - Forbidden (no write access)
+- `404` - Note not found
+
+---
+
+### GET /api/v1/notes/:noteId/diffs
+List all diffs (version history) for a note.
+
+**Parameters:**
+- `noteId` (path) - UUID of the note
 - `page` (query) - Page number (default: 1)
-- `limit` (query) - Items per page (default: 50, max: 200)
+- `limit` (query) - Items per page (default: 10)
 
 **Response:**
 ```json
@@ -226,42 +281,61 @@ List all diffs for a note.
   "data": [
     {
       "id": "diff-uuid-1",
+      "noteId": "note-uuid",
       "position": 45,
       "length": 12,
-      "new_text": "updated content",
-      "created_at": "2025-09-01T12:15:00Z",
-      "applied_at": "2025-09-01T12:15:00Z"
+      "newText": "updated content",
+      "createdAt": "2025-09-07T01:25:00.000Z"
     }
   ],
   "pagination": {
     "page": 1,
-    "limit": 50,
-    "total": 25,
-    "pages": 1,
+    "limit": 10,
+    "total": 5,
+    "totalPages": 1,
     "hasNext": false,
     "hasPrev": false
+  },
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
   }
 }
 ```
 
----
-
-### DELETE /api/v1/notes/:id
-Delete a note and all its associated data.
+### POST /api/v1/notes/:noteId/diffs
+Apply a diff to update note content and increment version.
 
 **Parameters:**
-- `id` (path) - UUID of the note
+- `noteId` (path) - UUID of the note
+
+**Request Body:**
+```json
+{
+  "position": 45,
+  "length": 12,
+  "newText": "updated content"
+}
+```
 
 **Response:**
 ```json
 {
   "success": true,
   "data": {
-    "deleted": true,
-    "note_id": "550e8400-e29b-41d4-a716-446655440000"
+    "success": true
+  },
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
   }
 }
 ```
+
+**Error Responses:**
+- `401` - Authentication required
+- `403` - Forbidden (no write access)
+- `404` - Note not found
 
 ---
 
@@ -270,9 +344,11 @@ Delete a note and all its associated data.
 ### GET /api/v1/workspaces
 List all workspaces accessible to the authenticated user.
 
-**Query Parameters:**
-- `page` (optional) - Page number (default: 1)
-- `limit` (optional) - Items per page (default: 20, max: 100)
+**Example Request:**
+```bash
+curl -X GET "http://localhost:4001/api/v1/workspaces" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
 
 **Response:**
 ```json
@@ -280,22 +356,28 @@ List all workspaces accessible to the authenticated user.
   "success": true,
   "data": [
     {
-      "id": "123e4567-e89b-12d3-a456-426614174000",
-      "name": "Project Alpha",
-      "description": "Main project workspace",
-      "tags": ["work", "2025"],
-      "permissions": {
-        "can_write": true
-      },
-      "created_at": "2025-08-01T10:00:00Z",
-      "updated_at": "2025-09-01T09:00:00Z"
+      "id": "00000000-0000-4000-8000-000000000011",
+      "createdAt": "2025-09-06T16:36:03.000Z",
+      "updatedAt": "2025-09-06T16:36:03.000Z",
+      "deletedAt": null,
+      "name": "Default Workspace",
+      "description": "Default workspace for development and testing"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000012",
+      "createdAt": "2025-09-06T16:36:03.000Z",
+      "updatedAt": "2025-09-06T16:36:03.000Z",
+      "deletedAt": null,
+      "name": "Personal Notes",
+      "description": "Personal knowledge management workspace"
     }
   ],
-  "pagination": { ... }
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
+  }
 }
 ```
-
----
 
 ### GET /api/v1/workspaces/:id
 Retrieve a specific workspace.
@@ -308,34 +390,33 @@ Retrieve a specific workspace.
 {
   "success": true,
   "data": {
-    "id": "123e4567-e89b-12d3-a456-426614174000",
-    "name": "Project Alpha",
-    "description": "Main project workspace",
-    "tags": ["work", "2025"],
-    "permissions": {
-      "can_write": true
-    },
-    "stats": {
-      "note_count": 47,
-      "total_size": 1048576
-    },
-    "created_at": "2025-08-01T10:00:00Z",
-    "updated_at": "2025-09-01T09:00:00Z"
+    "id": "00000000-0000-4000-8000-000000000011",
+    "createdAt": "2025-09-06T16:36:03.000Z",
+    "updatedAt": "2025-09-06T16:36:03.000Z", 
+    "deletedAt": null,
+    "name": "Default Workspace",
+    "description": "Default workspace for development and testing"
+  },
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
   }
 }
 ```
 
----
+**Error Responses:**
+- `401` - Authentication required
+- `403` - Forbidden (no workspace access)
+- `404` - Workspace not found
 
 ### POST /api/v1/workspaces
-Create a new workspace.
+Create a new workspace with automatic permission assignment.
 
 **Request Body:**
 ```json
 {
   "name": "New Workspace",
-  "description": "Optional description",
-  "tags": ["tag1", "tag2"]
+  "description": "Optional description"
 }
 ```
 
@@ -345,114 +426,74 @@ Create a new workspace.
   "success": true,
   "data": {
     "id": "new-workspace-uuid",
-    "name": "New Workspace",
+    "name": "New Workspace", 
     "description": "Optional description",
-    "tags": ["tag1", "tag2"],
-    "permissions": {
-      "can_write": true
-    },
-    "created_at": "2025-09-01T12:00:00Z",
-    "updated_at": "2025-09-01T12:00:00Z"
+    "createdAt": "2025-09-07T01:25:00.000Z",
+    "updatedAt": "2025-09-07T01:25:00.000Z",
+    "deletedAt": null
+  },
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
   }
 }
 ```
 
----
-
-### GET /api/v1/workspaces/:id/notes
-List all notes in a workspace.
+### PUT /api/v1/workspaces/:id
+Update workspace details.
 
 **Parameters:**
 - `id` (path) - UUID of the workspace
-- `page` (query) - Page number (default: 1)
-- `limit` (query) - Items per page (default: 20, max: 100)
-- `sort` (query) - Sort order: `created_at`, `updated_at`, `title` (default: `updated_at`)
-- `order` (query) - Sort direction: `asc`, `desc` (default: `desc`)
 
-**Response:**
+**Request Body:**
 ```json
 {
-  "success": true,
-  "data": [
-    {
-      "id": "note-uuid",
-      "title": "Note Title",
-      "workspace_id": "123e4567-e89b-12d3-a456-426614174000",
-      "tags": ["tag1"],
-      "workspace_tags": ["work", "2025"],
-      "created_at": "2025-09-01T10:00:00Z",
-      "updated_at": "2025-09-01T11:30:00Z",
-      "content_preview": "First 200 characters of content..."
-    }
-  ],
-  "pagination": { ... }
+  "name": "Updated Workspace Name",
+  "description": "Updated description"
 }
 ```
 
----
-
-## Search Endpoints
-
-### GET /api/v1/search
-Search notes across accessible workspaces.
-
-**Query Parameters:**
-- `q` (required) - Search query string
-- `workspace_ids` (optional) - Comma-separated workspace UUIDs to search within
-- `tags` (optional) - Comma-separated tag names to filter by
-- `page` (optional) - Page number (default: 1)
-- `limit` (optional) - Items per page (default: 20, max: 100)
-- `highlight` (optional) - Include search highlights (default: true)
-
 **Response:**
 ```json
 {
   "success": true,
-  "data": [
-    {
-      "id": "note-uuid",
-      "title": "Meeting Notes - Project Alpha",
-      "workspace_id": "workspace-uuid",
-      "tags": ["meeting", "project-alpha"],
-      "workspace_tags": ["work", "2025"],
-      "created_at": "2025-09-01T10:00:00Z",
-      "updated_at": "2025-09-01T11:30:00Z",
-      "content_preview": "...highlighted search terms...",
-      "highlights": {
-        "title": ["Meeting <mark>Notes</mark> - Project Alpha"],
-        "content": ["...contains the search <mark>term</mark>..."]
-      },
-      "score": 0.95
-    }
-  ],
-  "pagination": { ... },
-  "search_meta": {
-    "query": "search query",
-    "total_time_ms": 15,
-    "facets": {
-      "tags": {
-        "meeting": 12,
-        "project-alpha": 8
-      },
-      "workspaces": {
-        "workspace-uuid": 15
-      }
-    }
+  "data": {
+    "id": "workspace-uuid",
+    "name": "Updated Workspace Name",
+    "description": "Updated description"
+  },
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
   }
 }
 ```
+
+### DELETE /api/v1/workspaces/:id
+Soft delete a workspace.
+
+**Parameters:**
+- `id` (path) - UUID of the workspace
+
+**Response:**
+```
+204 No Content
+```
+
+**Error Responses:**
+- `401` - Authentication required
+- `403` - Forbidden (no write access)
+- `404` - Workspace not found
 
 ---
 
 ## Tags Endpoints
 
 ### GET /api/v1/tags
-List all tags accessible to the authenticated user.
+List tags for a specific workspace.
 
 **Query Parameters:**
-- `page` (optional) - Page number (default: 1)
-- `limit` (optional) - Items per page (default: 50, max: 200)
-- `search` (optional) - Filter tags by name
+- `workspaceId` (required) - UUID of the workspace
 
 **Response:**
 ```json
@@ -461,26 +502,58 @@ List all tags accessible to the authenticated user.
   "data": [
     {
       "id": "tag-uuid",
-      "name": "project-alpha",
-      "display_name": "Project Alpha",
-      "usage_count": 47,
-      "created_at": "2025-08-01T10:00:00Z"
+      "createdAt": "2025-09-06T16:36:03.000Z",
+      "updatedAt": "2025-09-06T16:36:03.000Z",
+      "deletedAt": null,
+      "name": "development",
+      "displayName": "Development"
     }
   ],
-  "pagination": { ... }
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
+  }
 }
 ```
 
----
+### GET /api/v1/workspaces/:workspaceId/tags
+Alternative endpoint to get workspace tags.
 
-### POST /api/v1/tags
-Create a new tag.
+**Parameters:**
+- `workspaceId` (path) - UUID of the workspace
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "tag-uuid",
+      "createdAt": "2025-09-06T16:36:03.000Z",
+      "updatedAt": "2025-09-06T16:36:03.000Z",
+      "deletedAt": null,
+      "name": "development",
+      "displayName": "Development"
+    }
+  ],
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
+  }
+}
+```
+
+### POST /api/v1/workspaces/:workspaceId/tags
+Create a new tag in a workspace.
+
+**Parameters:**
+- `workspaceId` (path) - UUID of the workspace
 
 **Request Body:**
 ```json
 {
   "name": "new-tag",
-  "display_name": "New Tag"
+  "displayName": "New Tag"
 }
 ```
 
@@ -491,69 +564,128 @@ Create a new tag.
   "data": {
     "id": "new-tag-uuid",
     "name": "new-tag",
-    "display_name": "New Tag",
-    "usage_count": 0,
-    "created_at": "2025-09-01T12:00:00Z"
+    "displayName": "New Tag",
+    "createdAt": "2025-09-07T01:25:00.000Z",
+    "updatedAt": "2025-09-07T01:25:00.000Z",
+    "deletedAt": null
+  },
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
   }
 }
 ```
 
-**Validation Rules:**
-- `name`: Lowercase, hyphens only, 1-100 characters, must match `/^[a-z0-9-]+$/`
-- `display_name`: 1-100 characters, human-readable format
+## Note-Tags Relationship Endpoints
 
----
-
-## Links Endpoints
-
-### GET /api/v1/notes/:id/links
-Get all links from and to a specific note.
+### GET /api/v1/notes/:noteId/tags
+Get all tags associated with a note.
 
 **Parameters:**
-- `id` (path) - UUID of the note
-- `direction` (query) - `outgoing`, `incoming`, or `both` (default: `both`)
+- `noteId` (path) - UUID of the note
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "tag-uuid",
+      "name": "development",
+      "displayName": "Development",
+      "createdAt": "2025-09-06T16:36:03.000Z",
+      "updatedAt": "2025-09-06T16:36:03.000Z",
+      "deletedAt": null
+    }
+  ],
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
+  }
+}
+```
+
+### POST /api/v1/notes/:noteId/tags
+Add a tag to a note.
+
+**Parameters:**
+- `noteId` (path) - UUID of the note
+
+**Request Body:**
+```json
+{
+  "tagId": "tag-uuid"
+}
+```
 
 **Response:**
 ```json
 {
   "success": true,
   "data": {
-    "outgoing": [
-      {
-        "id": "link-uuid",
-        "target_note_id": "target-note-uuid",
-        "target_note_title": "Linked Note Title",
-        "link_text": "see this note",
-        "position": 145,
-        "created_at": "2025-09-01T10:00:00Z"
-      }
-    ],
-    "incoming": [
-      {
-        "id": "link-uuid-2",
-        "source_note_id": "source-note-uuid",
-        "source_note_title": "Source Note Title",
-        "link_text": "reference to this note",
-        "position": 78,
-        "created_at": "2025-09-01T09:00:00Z"
-      }
-    ]
+    "noteId": "note-uuid",
+    "tagId": "tag-uuid"
+  },
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
   }
 }
 ```
 
+### DELETE /api/v1/notes/:noteId/tags/:tagId
+Remove a tag from a note.
+
+**Parameters:**
+- `noteId` (path) - UUID of the note
+- `tagId` (path) - UUID of the tag
+
+**Response:**
+```
+204 No Content
+```
+
 ---
 
+## Links Endpoints
+
+### GET /api/v1/notes/:noteId/links
+Get all links from and to a specific note.
+
+**Parameters:**
+- `noteId` (path) - UUID of the note
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "link-uuid",
+      "createdAt": "2025-09-06T16:36:03.000Z",
+      "updatedAt": "2025-09-06T16:36:03.000Z",
+      "deletedAt": null,
+      "sourceNoteId": "source-note-uuid",
+      "targetNoteId": "target-note-uuid",
+      "linkText": "see this note"
+    }
+  ],
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
+  }
+}
+```
+
 ### POST /api/v1/links
-Create a link between notes.
+Create a link between two notes.
 
 **Request Body:**
 ```json
 {
-  "source_note_id": "source-note-uuid",
-  "target_note_id": "target-note-uuid",
-  "link_text": "link display text",
-  "position": 145
+  "sourceNoteId": "source-note-uuid",
+  "targetNoteId": "target-note-uuid",
+  "linkText": "link display text"
 }
 ```
 
@@ -563,110 +695,153 @@ Create a link between notes.
   "success": true,
   "data": {
     "id": "new-link-uuid",
-    "source_note_id": "source-note-uuid",
-    "target_note_id": "target-note-uuid",
-    "link_text": "link display text",
-    "position": 145,
-    "created_at": "2025-09-01T12:00:00Z"
+    "sourceNoteId": "source-note-uuid",
+    "targetNoteId": "target-note-uuid", 
+    "linkText": "link display text",
+    "createdAt": "2025-09-07T01:25:00.000Z",
+    "updatedAt": "2025-09-07T01:25:00.000Z",
+    "deletedAt": null
+  },
+  "meta": {
+    "timestamp": "2025-09-07T01:25:00.000Z",
+    "version": "1.0.0"
   }
 }
 ```
 
+**Error Responses:**
+- `401` - Authentication required
+- `403` - Forbidden (no write access to source workspace)
+- `404` - Source or target note not found
+
+### DELETE /api/v1/links/:linkId
+Delete a link between notes.
+
+**Parameters:**
+- `linkId` (path) - UUID of the link
+
+**Response:**
+```
+204 No Content
+```
+
+**Error Responses:**
+- `401` - Authentication required
+- `403` - Forbidden (no write access)
+- `404` - Link not found
+
 ---
 
-## User Endpoints
+## Health Endpoint
 
-### GET /api/v1/user/profile
-Get current user profile information.
+### GET /health
+Public health check endpoint (no authentication required).
 
 **Response:**
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "user-uuid",
-    "name": "AI Agent Name",
-    "created_at": "2025-08-01T10:00:00Z",
-    "permissions": {
-      "workspaces": [
-        {
-          "workspace_id": "workspace-uuid",
-          "workspace_name": "Project Alpha",
-          "can_write": true
-        }
-      ]
-    }
-  }
+  "status": "healthy",
+  "timestamp": "2025-09-07T01:25:00.000Z",
+  "service": "memshelf-api"
 }
 ```
 
 ---
 
-## Rate Limiting
+## Future Features (Planned)
 
-**Rate Limits:**
-- **Read operations**: 1000 requests per hour per API key
-- **Write operations**: 200 requests per hour per API key
-- **Search operations**: 100 requests per hour per API key
+### Search Endpoints (Not Implemented)
+- Full-text search across notes
+- Meilisearch integration
+- Faceted search with filters
 
-**Rate Limit Headers:**
-```http
-X-RateLimit-Limit: 1000
-X-RateLimit-Remaining: 999
-X-RateLimit-Reset: 1693574400
-```
+### User Management (Not Implemented)  
+- User profile endpoints
+- API key management
+- Permission management
 
-**Rate Limit Exceeded (429):**
+### Rate Limiting (Not Implemented)
+- Per-API key rate limiting
+- Configurable limits by operation type
+
+### Additional Features (Not Implemented)
+- Note templates
+- Bulk operations
+- Webhooks for note changes
+- Export/import functionality
+
+---
+
+## HTTP Status Codes
+
+### Success Codes
+- `200 OK` - Request successful with data
+- `201 Created` - Resource created successfully
+- `204 No Content` - Request successful, no response body
+
+### Client Error Codes
+- `400 Bad Request` - Invalid request data (validation errors)
+- `401 Unauthorized` - Authentication required or failed
+- `403 Forbidden` - Access denied (insufficient permissions)
+- `404 Not Found` - Resource not found
+
+### Server Error Codes  
+- `500 Internal Server Error` - Unexpected server error
+
+## Common Error Patterns
+
+### Authentication Required (401)
 ```json
 {
-  "success": false,
-  "error": "rate_limit_exceeded",
-  "message": "Rate limit exceeded. Try again in 3600 seconds.",
-  "code": "RATE_001",
-  "details": {
-    "limit": 1000,
-    "reset_at": "2025-09-01T13:00:00Z"
+  "error": {
+    "code": 401,
+    "message": "Authentication required",
+    "timestamp": "2025-09-07T01:25:00.000Z"
+  }
+}
+```
+
+### Validation Error (400) 
+```json
+{
+  "error": {
+    "code": 400,
+    "message": "workspaceId is required", 
+    "timestamp": "2025-09-07T01:25:00.000Z"
+  }
+}
+```
+
+### Permission Denied (403)
+```json
+{
+  "error": {
+    "code": 403,
+    "message": "Forbidden",
+    "timestamp": "2025-09-07T01:25:00.000Z"
+  }
+}
+```
+
+### Resource Not Found (404)
+```json
+{
+  "error": {
+    "code": 404,
+    "message": "Note not found",
+    "timestamp": "2025-09-07T01:25:00.000Z"
   }
 }
 ```
 
 ---
 
-## Error Codes Reference
+## OpenAPI Specification (Planned)
 
-### Authentication (AUTH_xxx)
-- `AUTH_001` - Invalid or missing API key
-- `AUTH_002` - API key expired
-- `AUTH_003` - API key revoked
-
-### Notes (NOTE_xxx)
-- `NOTE_001` - Note not found
-- `NOTE_002` - Access denied to workspace
-- `NOTE_003` - Invalid workspace ID
-- `NOTE_004` - Workspace access denied
-- `NOTE_005` - Version conflict
-- `NOTE_006` - Invalid diff position/length
-- `NOTE_007` - Diff would exceed content limits
-
-### Validation (VALIDATION_xxx)
-- `VALIDATION_001` - Invalid request data
-- `VALIDATION_002` - Missing required field
-- `VALIDATION_003` - Invalid field format
-
-### Rate Limiting (RATE_xxx)
-- `RATE_001` - Rate limit exceeded
-
-### Server (SERVER_xxx)
-- `SERVER_001` - Internal server error
-- `SERVER_002` - Database unavailable
-- `SERVER_003` - Search service unavailable
-
----
-
-## OpenAPI Specification
-
-The complete OpenAPI 3.0 specification is available at:
-- **JSON**: `GET /api/v1/openapi.json`
+Future implementation will include:
+- **JSON Spec**: `GET /api/v1/openapi.json`
 - **Interactive UI**: `GET /api/v1/docs` (Swagger UI)
+- **Schema Definitions**: Auto-generated from Zod schemas
+- **Client SDK Generation**: For multiple languages
 
-This provides complete schema definitions, request/response examples, and an interactive API explorer.
+See `project-docs/api/openapi-integration-plan.md` for implementation details.
