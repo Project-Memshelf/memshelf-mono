@@ -30,12 +30,14 @@ Authorization: Bearer <your-api-key>
 }
 ```
 
-**Development API Keys** (for testing):
+**Development API Keys** (for testing - replace YOUR_API_KEY in examples):
 ```
 Admin User:    dev_admin_key_0123456789abcdef0123456789abcdef01234567
 John Developer: dev_john_key_fedcba9876543210fedcba9876543210fedcba98
 Jane Designer:  dev_jane_key_abcdef0123456789abcdef0123456789abcdef01
 ```
+
+> **Note**: Replace `YOUR_API_KEY` in curl examples with one of the development keys above for testing.
 
 ---
 
@@ -99,7 +101,7 @@ List notes in a workspace.
 **Example Request:**
 ```bash
 curl -X GET "http://localhost:4001/api/v1/notes?workspaceId=00000000-0000-4000-8000-000000000011" \
-  -H "Authorization: Bearer dev_admin_key_0123456789abcdef0123456789abcdef01234567"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 **Response:**
@@ -345,7 +347,7 @@ List all workspaces accessible to the authenticated user.
 **Example Request:**
 ```bash
 curl -X GET "http://localhost:4001/api/v1/workspaces" \
-  -H "Authorization: Bearer dev_admin_key_0123456789abcdef0123456789abcdef01234567"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 **Response:**
