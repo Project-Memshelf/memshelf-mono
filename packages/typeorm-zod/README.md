@@ -106,6 +106,46 @@ userSchemas.patch;
 userSchemas.query;
 ```
 
+### Per-Property Schema Control
+
+Use the enhanced `@ZodProperty` decorator to exclude fields from specific schema variants:
+
+```typescript
+@Entity()
+export class Note extends AppEntity {
+    @Column('varchar', { length: 500 })
+    @ZodProperty(z.string().min(1).max(500))
+    title: string;
+
+    @Column('longtext')
+    @ZodProperty(z.string())
+    content: string;
+
+    // Auto-managed version field - exclude from create/update/patch
+    @VersionColumn()
+    @ZodProperty({
+        schema: z.number().int().min(0),
+        skip: ['create', 'update', 'patch']
+    })
+    version: number;
+
+    // Auto-generated timestamp - exclude only from create
+    @UpdateDateColumn()
+    @ZodProperty({
+        schema: z.date(),
+        skip: ['create']
+    })
+    updatedAt: Date;
+}
+
+// Generated schemas automatically respect skip settings:
+const noteSchemas = createEntitySchemas(Note);
+
+// noteSchemas.create: { title, content } - no version or updatedAt
+// noteSchemas.update: { id, title?, content?, updatedAt? } - no version  
+// noteSchemas.full: { id, title, content, version, createdAt, updatedAt } - all fields
+```
+
 ### Advanced Usage with Custom Options
 
 ```typescript
@@ -180,10 +220,11 @@ app.patch('/users/:id',
 
 ### Decorators
 
-#### `@ZodProperty(zodSchema)`
+#### `@ZodProperty(zodSchema)` or `@ZodProperty({ schema, skip? })`
 
-Adds Zod validation to any property:
+Adds Zod validation to any property with optional schema control:
 
+**Basic Usage:**
 ```typescript
 @ZodProperty(z.string().min(1).max(100))
 name: string;
@@ -194,6 +235,35 @@ age: number;
 @ZodProperty(z.string().email().optional())
 email?: string;
 ```
+
+**Advanced Usage with Per-Property Schema Control:**
+```typescript
+// Skip validation for specific schema variants
+@ZodProperty({
+    schema: z.number().int().min(0),
+    skip: ['create', 'update', 'patch'] // Exclude from these schemas
+})
+version: number; // Auto-managed by TypeORM @VersionColumn
+
+@ZodProperty({
+    schema: z.date(),
+    skip: ['create'] // Only exclude from create schema
+})
+updatedAt: Date; // Auto-managed, but allow in update/patch
+
+@ZodProperty({
+    schema: z.string().uuid(),
+    skip: ['create', 'update'] // Only include in full, patch, and query
+})
+id: string; // Primary key - exclude from create/update
+```
+
+**Schema Variants:**
+- `'full'` - Complete entity schema with all fields
+- `'create'` - For creating new entities (typically excludes auto-generated fields)
+- `'update'` - For updating existing entities (id required, others optional)
+- `'patch'` - For partial updates (all fields optional)
+- `'query'` - For filtering/searching (all fields optional)
 
 #### `@ZodColumn(columnOptions, zodSchema)`
 

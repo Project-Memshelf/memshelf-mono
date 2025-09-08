@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { z } from 'zod';
-import { createEntitySchemas, ZodProperty } from '../src/index';
+import { createEntitySchemas, ZodProperty } from '../src';
 
 // Test entity
 class TestUserEntity {

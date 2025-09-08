@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { SchemaVariant } from './decorators/metadata';
 import { getMetadata } from './metadata-store';
 
 type ConstructorFunction = new (...args: unknown[]) => unknown;
@@ -36,8 +37,13 @@ export interface EntitySchemas<_T = Record<string, unknown>> {
  */
 function getAllMetadata(
     entityClass: ConstructorFunction
-): Array<{ propertyKey: string; zodSchema: z.ZodTypeAny; columnOptions?: unknown }> {
-    const allMetadata: Array<{ propertyKey: string; zodSchema: z.ZodTypeAny; columnOptions?: unknown }> = [];
+): Array<{ propertyKey: string; zodSchema: z.ZodTypeAny; columnOptions?: unknown; skip?: SchemaVariant[] }> {
+    const allMetadata: Array<{
+        propertyKey: string;
+        zodSchema: z.ZodTypeAny;
+        columnOptions?: unknown;
+        skip?: SchemaVariant[];
+    }> = [];
     const seenProperties = new Set<string>();
 
     // Walk up the prototype chain to collect metadata from all classes
@@ -49,7 +55,12 @@ function getAllMetadata(
         // Add metadata from current class (child properties override parent properties)
         metadata.forEach((item) => {
             if (!seenProperties.has(item.propertyKey)) {
-                allMetadata.push(item);
+                allMetadata.push({
+                    propertyKey: item.propertyKey,
+                    zodSchema: item.zodSchema,
+                    columnOptions: item.columnOptions,
+                    skip: item.skip,
+                });
                 seenProperties.add(item.propertyKey);
             }
         });
@@ -67,24 +78,48 @@ function getAllMetadata(
 }
 
 /**
- * Extract Zod schema from entity class with decorators using WeakMap storage and inheritance
+ * Filter metadata based on schema variant and skip settings
  */
-export function createZodFromEntity<T>(
-    entityClass: new () => T,
-    options: SchemaGenerationOptions = {}
-): z.ZodObject<z.ZodRawShape> {
-    const validationMetadata = getAllMetadata(entityClass);
+function filterMetadataForSchema(
+    metadata: Array<{ propertyKey: string; zodSchema: z.ZodTypeAny; columnOptions?: unknown; skip?: SchemaVariant[] }>,
+    schemaVariant: SchemaVariant,
+    globalOmitFields: string[] = []
+): Array<{ propertyKey: string; zodSchema: z.ZodTypeAny; columnOptions?: unknown; skip?: SchemaVariant[] }> {
+    return metadata.filter(({ propertyKey, skip }) => {
+        // Check if property should be skipped based on per-property skip settings
+        if (skip?.includes(schemaVariant)) {
+            return false;
+        }
 
-    if (validationMetadata.length === 0) {
+        // Check if property should be omitted based on global settings
+        return !globalOmitFields.includes(propertyKey);
+    });
+}
+
+/**
+ * Create Zod schema for a specific variant (create, update, etc.) respecting skip settings
+ */
+function createZodFromEntityForVariant<T>(
+    entityClass: new () => T,
+    schemaVariant: SchemaVariant,
+    options: SchemaGenerationOptions = {},
+    globalOmitFields: string[] = []
+): z.ZodObject<z.ZodRawShape> {
+    const allMetadata = getAllMetadata(entityClass);
+
+    if (allMetadata.length === 0) {
         throw new Error(
             `No Zod validation metadata found for entity ${String(entityClass.name)}. ` +
                 'Make sure to use @ZodProperty or @ZodColumn decorators on entity properties.'
         );
     }
 
+    // Filter metadata based on schema variant and skip settings
+    const filteredMetadata = filterMetadataForSchema(allMetadata, schemaVariant, globalOmitFields);
+
     const shape: Record<string, z.ZodTypeAny> = {};
 
-    validationMetadata.forEach(({ propertyKey, zodSchema, columnOptions }) => {
+    filteredMetadata.forEach(({ propertyKey, zodSchema, columnOptions }) => {
         let finalSchema = zodSchema;
 
         // Apply custom transforms if provided
@@ -116,42 +151,47 @@ export function createZodFromEntity<T>(
 }
 
 /**
+ * Extract Zod schema from entity class with decorators using WeakMap storage and inheritance
+ * This creates the full schema including all properties
+ */
+export function createZodFromEntity<T>(
+    entityClass: new () => T,
+    options: SchemaGenerationOptions = {}
+): z.ZodObject<z.ZodRawShape> {
+    return createZodFromEntityForVariant(entityClass, 'full', options);
+}
+
+/**
  * Create comprehensive schema collection from entity class using WeakMap storage and inheritance
  */
 export function createEntitySchemas<T>(
     entityClass: new () => T,
     options: SchemaGenerationOptions = {}
 ): EntitySchemas<T> {
-    const fullSchema = createZodFromEntity(entityClass, options);
-
-    // Default fields to omit from create schema
+    // Default fields to omit from create schema (legacy global settings)
     const defaultCreateOmit = ['id', 'createdAt', 'updatedAt', 'deletedAt'];
     const createOmitFields = [...defaultCreateOmit, ...(options.omitFromCreate || [])];
 
-    // Create omit object for create schema
-    const createOmitObject = createOmitFields.reduce(
-        (acc, field) => {
-            acc[field] = true;
-            return acc;
-        },
-        {} as Record<string, true>
-    );
+    // Default fields to omit from update schema (legacy global settings)
+    const updateOmitFields = options.omitFromUpdate || [];
 
     return {
-        // Full entity schema
-        full: fullSchema,
+        // Full entity schema - includes all properties
+        full: createZodFromEntityForVariant(entityClass, 'full', options),
 
-        // Create schema - omit auto-generated fields
-        create: fullSchema.omit(createOmitObject),
+        // Create schema - respects per-property skip settings and global omits
+        create: createZodFromEntityForVariant(entityClass, 'create', options, createOmitFields),
 
-        // Update schema - require id, make everything else optional
-        update: fullSchema.partial().required({ id: true }),
+        // Update schema - respects per-property skip settings, then make optional with required id
+        update: createZodFromEntityForVariant(entityClass, 'update', options, updateOmitFields)
+            .partial()
+            .required({ id: true }),
 
-        // Patch schema - all optional
-        patch: fullSchema.partial(),
+        // Patch schema - respects per-property skip settings, then make all optional
+        patch: createZodFromEntityForVariant(entityClass, 'patch', options).partial(),
 
-        // Query schema - for filtering/searching (all optional)
-        query: fullSchema.partial(),
+        // Query schema - respects per-property skip settings, then make all optional
+        query: createZodFromEntityForVariant(entityClass, 'query', options).partial(),
     };
 }
 
