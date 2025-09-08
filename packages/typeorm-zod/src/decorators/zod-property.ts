@@ -1,6 +1,24 @@
-import { z } from 'zod';
+import type { z } from 'zod';
 import { addMetadata, hasPropertyMetadata } from '../metadata-store';
 import type { SchemaVariant } from './metadata';
+
+/**
+ * Check if value is a valid Zod schema using duck typing.
+ * More reliable than instanceof checks when dealing with multiple Zod instances.
+ */
+function isValidZodSchema(value: unknown): value is z.ZodTypeAny {
+    if (value == null || typeof value !== 'object') {
+        return false;
+    }
+
+    const schema = value as Record<string, unknown>;
+    return (
+        typeof schema.parse === 'function' &&
+        typeof schema._def === 'object' &&
+        schema._def != null &&
+        typeof (schema._def as Record<string, unknown>).typeName === 'string'
+    );
+}
 
 // ZodProperty decorator options
 export interface ZodPropertyOptions {
@@ -37,7 +55,7 @@ export function ZodProperty(schemaOrOptions: z.ZodTypeAny | ZodPropertyOptions):
 
         if (isObjectSyntax) {
             // Validate schema property
-            if (!schemaOrOptions.schema || !(schemaOrOptions.schema instanceof z.ZodType)) {
+            if (!isValidZodSchema(schemaOrOptions.schema)) {
                 throw new Error(
                     `ZodProperty decorator: 'schema' property is missing or is not a valid Zod schema for property '${propertyKeyStr}' on '${constructorFunc.name}'.`
                 );
@@ -46,7 +64,7 @@ export function ZodProperty(schemaOrOptions: z.ZodTypeAny | ZodPropertyOptions):
             skip = schemaOrOptions.skip;
         } else {
             // Validate legacy syntax schema
-            if (!(schemaOrOptions instanceof z.ZodType)) {
+            if (!isValidZodSchema(schemaOrOptions)) {
                 throw new Error(
                     `ZodProperty decorator: Expected a Zod schema for property '${propertyKeyStr}' on '${constructorFunc.name}'.`
                 );
