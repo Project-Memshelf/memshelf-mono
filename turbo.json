@@ -7,10 +7,10 @@
             "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
         },
         "test": {
-            "cache": false
+            "cache": true
         },
         "typecheck": {
-            "cache": false
+            "cache": true
         },
         "dev": {
             "cache": false,
