@@ -37,7 +37,11 @@
         "cli": "bun run --cwd apps/cli dev --",
         "cli:build": "bun run --cwd apps/cli build",
         "cli:dev": "bun run --cwd apps/cli dev --",
-        "memshelf": "bun run --cwd apps/cli dev --"
+        "memshelf": "bun run --cwd apps/cli dev --",
+        "docker:test:start": "docker compose -f ./docker/docker-compose.test.yml up -d",
+        "docker:test:stop": "docker compose -f ./docker/docker-compose.test.yml down",
+        "docker:test:clear": "docker compose -f ./docker/docker-compose.test.yml down -v",
+        "docker:test:logs": "docker compose -f ./docker/docker-compose.test.yml logs -f"
     },
     "devDependencies": {
         "@biomejs/biome": "^2.2.3",
