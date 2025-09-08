@@ -1,3 +1,4 @@
+import path from 'node:path';
 import dotenv from 'dotenv';
 import { merge } from 'ts-deepmerge';
 import { ZodError } from 'zod';
@@ -8,8 +9,8 @@ import { type DeepPartial, NodeEnv } from '../types';
 // Load environment-specific .env file based on NODE_ENV
 const nodeEnv = process.env.NODE_ENV || 'development';
 const envFiles = [
-    `../../.env.${nodeEnv}`, // .env.test, .env.development, etc.
-    '../../.env', // Fallback to default .env
+    path.resolve(__dirname, `../../.env.${nodeEnv}`), // .env.test, .env.development, etc.
+    path.resolve(__dirname, '../../.env'), // Fallback to default .env
 ];
 
 dotenv.config({
