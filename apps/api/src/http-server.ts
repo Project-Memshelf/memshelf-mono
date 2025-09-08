@@ -2,9 +2,9 @@ import type { User } from '@repo/database';
 import { AppLogger } from '@repo/shared-services';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { HTTPException } from 'hono/http-exception';
 import { secureHeaders } from 'hono/secure-headers';
 import { config, container } from './config';
+import { errorHandler } from './middleware/error-handler';
 import { appRoutes } from './routes';
 
 // Define the types for your context variables
@@ -96,34 +96,8 @@ if (config.nodeEnv.isDevelopment) {
     });
 }
 
-// Global error handler with consistent HTTPException handling
-honoApp.onError((err, c) => {
-    const logger = container.resolve(AppLogger);
-
-    let httpException: HTTPException;
-
-    if (err instanceof HTTPException) {
-        httpException = err;
-        logger.warn({ error: err }, 'HTTP Exception');
-    } else {
-        // Convert any error to HTTPException for consistent handling
-        httpException = new HTTPException(500, {
-            message: 'Internal server error',
-        });
-        logger.error({ error: err }, 'Unhandled error converted to HTTP Exception');
-    }
-
-    return c.json(
-        {
-            error: {
-                code: httpException.status,
-                message: httpException.message,
-                timestamp: new Date().toISOString(),
-            },
-        },
-        httpException.status
-    );
-});
+// Global error handler middleware
+honoApp.onError(errorHandler);
 
 honoApp.route('/', appRoutes);
 export { honoApp };
