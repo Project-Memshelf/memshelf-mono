@@ -1,4 +1,4 @@
-import type { z } from 'zod';
+import { z } from 'zod';
 import { addMetadata, hasPropertyMetadata } from '../metadata-store';
 import type { SchemaVariant } from './metadata';
 
@@ -32,8 +32,27 @@ export function ZodProperty(schemaOrOptions: z.ZodTypeAny | ZodPropertyOptions):
         // Handle both legacy syntax and new object syntax
         const isObjectSyntax = schemaOrOptions && typeof schemaOrOptions === 'object' && 'schema' in schemaOrOptions;
 
-        const zodSchema = isObjectSyntax ? schemaOrOptions.schema : (schemaOrOptions as z.ZodTypeAny);
-        const skip = isObjectSyntax ? schemaOrOptions.skip : undefined;
+        let zodSchema: z.ZodTypeAny;
+        let skip: SchemaVariant[] | undefined;
+
+        if (isObjectSyntax) {
+            // Validate schema property
+            if (!schemaOrOptions.schema || !(schemaOrOptions.schema instanceof z.ZodType)) {
+                throw new Error(
+                    `ZodProperty decorator: 'schema' property is missing or is not a valid Zod schema for property '${propertyKeyStr}' on '${constructorFunc.name}'.`
+                );
+            }
+            zodSchema = schemaOrOptions.schema;
+            skip = schemaOrOptions.skip;
+        } else {
+            // Validate legacy syntax schema
+            if (!(schemaOrOptions instanceof z.ZodType)) {
+                throw new Error(
+                    `ZodProperty decorator: Expected a Zod schema for property '${propertyKeyStr}' on '${constructorFunc.name}'.`
+                );
+            }
+            zodSchema = schemaOrOptions;
+        }
 
         // Add metadata using WeakMap storage
         addMetadata(constructorFunc, {

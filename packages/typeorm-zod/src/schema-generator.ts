@@ -92,11 +92,7 @@ function filterMetadataForSchema(
         }
 
         // Check if property should be omitted based on global settings
-        if (globalOmitFields.includes(propertyKey)) {
-            return false;
-        }
-
-        return true;
+        return !globalOmitFields.includes(propertyKey);
     });
 }
 
