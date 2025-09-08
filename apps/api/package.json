@@ -8,13 +8,15 @@
         "build": "bun build src/index.ts --outdir dist --format esm --target bun",
         "dev": "bun run src/index.ts",
         "typecheck": "tsc --noEmit",
-        "prepublishOnly": "bun run build"
+        "prepublishOnly": "bun run build",
+        "test": "bun test"
     },
     "dependencies": {
         "@repo/database": "*",
         "@repo/shared-core": "*",
         "@repo/shared-services": "*",
-        "hono": "^4.9.6"
+        "hono": "^4.9.6",
+        "reflect-metadata": "^0.2.2"
     },
     "devDependencies": {
         "@types/bun": "latest",
