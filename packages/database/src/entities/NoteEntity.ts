@@ -34,7 +34,10 @@ export class NoteEntity extends AppEntity {
     content: string;
 
     @VersionColumn()
-    @ZodProperty(z.number().int().min(0))
+    @ZodProperty({
+        schema: z.number().int().min(0),
+        skip: ['create', 'update', 'patch'],
+    })
     version: number;
 
     @OneToMany(

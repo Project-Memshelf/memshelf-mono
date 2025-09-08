@@ -13,10 +13,10 @@
  */
 
 // Metadata types
-export { ZOD_METADATA_KEY, type ZodValidationMetadata } from './decorators/metadata';
+export { type SchemaVariant, ZOD_METADATA_KEY, type ZodValidationMetadata } from './decorators/metadata';
 export { ZodColumn } from './decorators/zod-column';
 // Decorators (production-ready, pollution-free)
-export { ZodProperty } from './decorators/zod-property';
+export { ZodProperty, type ZodPropertyOptions } from './decorators/zod-property';
 // Metadata storage (WeakMap-based, pollution-free)
 export {
     addMetadata,

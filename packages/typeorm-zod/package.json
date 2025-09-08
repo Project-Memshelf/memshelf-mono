@@ -28,7 +28,8 @@
         "dto"
     ],
     "scripts": {
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "test": "bun test"
     },
     "dependencies": {
         "reflect-metadata": "^0.2.2",
