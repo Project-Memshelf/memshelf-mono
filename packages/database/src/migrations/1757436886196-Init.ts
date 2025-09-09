@@ -1,15 +1,9 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AppEntities1757050849478 implements MigrationInterface {
-    name = 'AppEntities1757050849478';
+export class Init1757436886196 implements MigrationInterface {
+    name = 'Init1757436886196';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            DROP INDEX \`users_email\` ON \`users\`
-        `);
-        await queryRunner.query(`
-            ALTER TABLE \`users\` CHANGE \`email\` \`api_key\` varchar(255) NOT NULL
-        `);
         await queryRunner.query(`
             CREATE TABLE \`diffs\` (
                 \`id\` varchar(36) NOT NULL,
@@ -44,12 +38,50 @@ export class AppEntities1757050849478 implements MigrationInterface {
             ) ENGINE = InnoDB
         `);
         await queryRunner.query(`
+            CREATE TABLE \`users\` (
+                \`id\` varchar(36) NOT NULL,
+                \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+                \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+                \`deleted_at\` datetime(6) NULL,
+                \`name\` varchar(255) NOT NULL,
+                \`api_key\` varchar(255) NOT NULL,
+                INDEX \`users_created_at\` (\`created_at\`),
+                UNIQUE INDEX \`users_api_key\` (\`api_key\`),
+                PRIMARY KEY (\`id\`)
+            ) ENGINE = InnoDB
+        `);
+        await queryRunner.query(`
             CREATE TABLE \`user_permissions\` (
+                \`id\` varchar(36) NOT NULL,
+                \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+                \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+                \`deleted_at\` datetime(6) NULL,
                 \`user_id\` varchar(255) NOT NULL,
                 \`workspace_id\` varchar(255) NOT NULL,
                 \`can_write\` tinyint NOT NULL DEFAULT 0,
+                INDEX \`user_permissions_created_at\` (\`created_at\`),
+                PRIMARY KEY (\`id\`, \`user_id\`, \`workspace_id\`)
+            ) ENGINE = InnoDB
+        `);
+        await queryRunner.query(`
+            CREATE TABLE \`tags\` (
+                \`id\` varchar(36) NOT NULL,
                 \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-                PRIMARY KEY (\`user_id\`, \`workspace_id\`)
+                \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+                \`deleted_at\` datetime(6) NULL,
+                \`name\` varchar(100) NOT NULL,
+                \`display_name\` varchar(100) NOT NULL,
+                INDEX \`tags_created_at\` (\`created_at\`),
+                UNIQUE INDEX \`tags_name\` (\`name\`),
+                PRIMARY KEY (\`id\`)
+            ) ENGINE = InnoDB
+        `);
+        await queryRunner.query(`
+            CREATE TABLE \`workspace_tags\` (
+                \`workspace_id\` varchar(255) NOT NULL,
+                \`tag_id\` varchar(255) NOT NULL,
+                \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+                PRIMARY KEY (\`workspace_id\`, \`tag_id\`)
             ) ENGINE = InnoDB
         `);
         await queryRunner.query(`
@@ -90,44 +122,6 @@ export class AppEntities1757050849478 implements MigrationInterface {
             ) ENGINE = InnoDB
         `);
         await queryRunner.query(`
-            CREATE TABLE \`tags\` (
-                \`id\` varchar(36) NOT NULL,
-                \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-                \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
-                \`deleted_at\` datetime(6) NULL,
-                \`name\` varchar(100) NOT NULL,
-                \`display_name\` varchar(100) NOT NULL,
-                INDEX \`tags_created_at\` (\`created_at\`),
-                UNIQUE INDEX \`tags_name\` (\`name\`),
-                PRIMARY KEY (\`id\`)
-            ) ENGINE = InnoDB
-        `);
-        await queryRunner.query(`
-            CREATE TABLE \`workspace_tags\` (
-                \`workspace_id\` varchar(255) NOT NULL,
-                \`tag_id\` varchar(255) NOT NULL,
-                \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-                PRIMARY KEY (\`workspace_id\`, \`tag_id\`)
-            ) ENGINE = InnoDB
-        `);
-        await queryRunner.query(`
-            ALTER TABLE \`users\` CHANGE \`deleted_at\` \`deleted_at\` datetime(6) NULL
-        `);
-        await queryRunner.query(`
-            ALTER TABLE \`users\` DROP COLUMN \`api_key\`
-        `);
-        await queryRunner.query(`
-            ALTER TABLE \`users\`
-            ADD \`api_key\` varchar(255) NOT NULL
-        `);
-        await queryRunner.query(`
-            ALTER TABLE \`users\`
-            ADD UNIQUE INDEX \`users_api_key\` (\`api_key\`)
-        `);
-        await queryRunner.query(`
-            CREATE INDEX \`users_created_at\` ON \`users\` (\`created_at\`)
-        `);
-        await queryRunner.query(`
             ALTER TABLE \`diffs\`
             ADD CONSTRAINT \`diffs_note_id_fk\` FOREIGN KEY (\`note_id\`) REFERENCES \`notes\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION
         `);
@@ -148,6 +142,14 @@ export class AppEntities1757050849478 implements MigrationInterface {
             ADD CONSTRAINT \`user_permissions_workspace_id_fk\` FOREIGN KEY (\`workspace_id\`) REFERENCES \`workspaces\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION
         `);
         await queryRunner.query(`
+            ALTER TABLE \`workspace_tags\`
+            ADD CONSTRAINT \`workspace_tags_workspace_id_fk\` FOREIGN KEY (\`workspace_id\`) REFERENCES \`workspaces\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION
+        `);
+        await queryRunner.query(`
+            ALTER TABLE \`workspace_tags\`
+            ADD CONSTRAINT \`workspace_tags_tag_id_fk\` FOREIGN KEY (\`tag_id\`) REFERENCES \`tags\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION
+        `);
+        await queryRunner.query(`
             ALTER TABLE \`notes\`
             ADD CONSTRAINT \`notes_workspace_id_fk\` FOREIGN KEY (\`workspace_id\`) REFERENCES \`workspaces\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION
         `);
@@ -159,23 +161,9 @@ export class AppEntities1757050849478 implements MigrationInterface {
             ALTER TABLE \`note_tags\`
             ADD CONSTRAINT \`note_tags_tag_id_fk\` FOREIGN KEY (\`tag_id\`) REFERENCES \`tags\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION
         `);
-        await queryRunner.query(`
-            ALTER TABLE \`workspace_tags\`
-            ADD CONSTRAINT \`workspace_tags_workspace_id_fk\` FOREIGN KEY (\`workspace_id\`) REFERENCES \`workspaces\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION
-        `);
-        await queryRunner.query(`
-            ALTER TABLE \`workspace_tags\`
-            ADD CONSTRAINT \`workspace_tags_tag_id_fk\` FOREIGN KEY (\`tag_id\`) REFERENCES \`tags\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION
-        `);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            ALTER TABLE \`workspace_tags\` DROP FOREIGN KEY \`workspace_tags_tag_id_fk\`
-        `);
-        await queryRunner.query(`
-            ALTER TABLE \`workspace_tags\` DROP FOREIGN KEY \`workspace_tags_workspace_id_fk\`
-        `);
         await queryRunner.query(`
             ALTER TABLE \`note_tags\` DROP FOREIGN KEY \`note_tags_tag_id_fk\`
         `);
@@ -184,6 +172,12 @@ export class AppEntities1757050849478 implements MigrationInterface {
         `);
         await queryRunner.query(`
             ALTER TABLE \`notes\` DROP FOREIGN KEY \`notes_workspace_id_fk\`
+        `);
+        await queryRunner.query(`
+            ALTER TABLE \`workspace_tags\` DROP FOREIGN KEY \`workspace_tags_tag_id_fk\`
+        `);
+        await queryRunner.query(`
+            ALTER TABLE \`workspace_tags\` DROP FOREIGN KEY \`workspace_tags_workspace_id_fk\`
         `);
         await queryRunner.query(`
             ALTER TABLE \`user_permissions\` DROP FOREIGN KEY \`user_permissions_workspace_id_fk\`
@@ -199,34 +193,6 @@ export class AppEntities1757050849478 implements MigrationInterface {
         `);
         await queryRunner.query(`
             ALTER TABLE \`diffs\` DROP FOREIGN KEY \`diffs_note_id_fk\`
-        `);
-        await queryRunner.query(`
-            DROP INDEX \`users_created_at\` ON \`users\`
-        `);
-        await queryRunner.query(`
-            ALTER TABLE \`users\` DROP INDEX \`users_api_key\`
-        `);
-        await queryRunner.query(`
-            ALTER TABLE \`users\` DROP COLUMN \`api_key\`
-        `);
-        await queryRunner.query(`
-            ALTER TABLE \`users\`
-            ADD \`api_key\` varchar(255) NOT NULL
-        `);
-        await queryRunner.query(`
-            ALTER TABLE \`users\` CHANGE \`deleted_at\` \`deleted_at\` datetime(6) NULL DEFAULT 'NULL'
-        `);
-        await queryRunner.query(`
-            DROP TABLE \`workspace_tags\`
-        `);
-        await queryRunner.query(`
-            DROP INDEX \`tags_name\` ON \`tags\`
-        `);
-        await queryRunner.query(`
-            DROP INDEX \`tags_created_at\` ON \`tags\`
-        `);
-        await queryRunner.query(`
-            DROP TABLE \`tags\`
         `);
         await queryRunner.query(`
             DROP TABLE \`note_tags\`
@@ -253,7 +219,31 @@ export class AppEntities1757050849478 implements MigrationInterface {
             DROP TABLE \`workspaces\`
         `);
         await queryRunner.query(`
+            DROP TABLE \`workspace_tags\`
+        `);
+        await queryRunner.query(`
+            DROP INDEX \`tags_name\` ON \`tags\`
+        `);
+        await queryRunner.query(`
+            DROP INDEX \`tags_created_at\` ON \`tags\`
+        `);
+        await queryRunner.query(`
+            DROP TABLE \`tags\`
+        `);
+        await queryRunner.query(`
+            DROP INDEX \`user_permissions_created_at\` ON \`user_permissions\`
+        `);
+        await queryRunner.query(`
             DROP TABLE \`user_permissions\`
+        `);
+        await queryRunner.query(`
+            DROP INDEX \`users_api_key\` ON \`users\`
+        `);
+        await queryRunner.query(`
+            DROP INDEX \`users_created_at\` ON \`users\`
+        `);
+        await queryRunner.query(`
+            DROP TABLE \`users\`
         `);
         await queryRunner.query(`
             DROP INDEX \`links_source_note_id_target_note_id_position\` ON \`links\`
@@ -278,12 +268,6 @@ export class AppEntities1757050849478 implements MigrationInterface {
         `);
         await queryRunner.query(`
             DROP TABLE \`diffs\`
-        `);
-        await queryRunner.query(`
-            ALTER TABLE \`users\` CHANGE \`api_key\` \`email\` varchar(255) NOT NULL
-        `);
-        await queryRunner.query(`
-            CREATE UNIQUE INDEX \`users_email\` ON \`users\` (\`email\`)
         `);
     }
 }

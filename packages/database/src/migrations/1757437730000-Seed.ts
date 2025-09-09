@@ -1,6 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class Seed1757175127501 implements MigrationInterface {
+export class Seed1757437730000 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         // Insert Users
         await queryRunner.query(`
@@ -18,16 +18,16 @@ export class Seed1757175127501 implements MigrationInterface {
             ('00000000-0000-4000-8000-000000000013', 'Project Alpha', 'Collaborative workspace for Project Alpha development', NOW(), NOW())
         `);
 
-        // Insert User Permissions
+        // Insert User Permissions (with UUIDs for id field due to AppEntity extension)
         await queryRunner.query(`
-            INSERT INTO user_permissions (user_id, workspace_id, can_write, created_at) VALUES
-            ('00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000011', true, NOW()),
-            ('00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000012', true, NOW()),
-            ('00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000013', true, NOW()),
-            ('00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000011', true, NOW()),
-            ('00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000013', true, NOW()),
-            ('00000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000012', false, NOW()),
-            ('00000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000013', false, NOW())
+            INSERT INTO user_permissions (id, user_id, workspace_id, can_write, created_at, updated_at) VALUES
+            ('10000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000011', true, NOW(), NOW()),
+            ('10000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000012', true, NOW(), NOW()),
+            ('10000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000013', true, NOW(), NOW()),
+            ('10000000-0000-4000-8000-000000000004', '00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000011', true, NOW(), NOW()),
+            ('10000000-0000-4000-8000-000000000005', '00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000013', true, NOW(), NOW()),
+            ('10000000-0000-4000-8000-000000000006', '00000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000012', false, NOW(), NOW()),
+            ('10000000-0000-4000-8000-000000000007', '00000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000013', false, NOW(), NOW())
         `);
 
         // Insert Tags
@@ -282,9 +282,7 @@ January 22, 2024 at 2:00 PM`,
         );
         await queryRunner.query(`DELETE FROM notes WHERE id LIKE '00000000-0000-4000-8000-0000000000%'`);
         await queryRunner.query(`DELETE FROM tags WHERE id LIKE '00000000-0000-4000-8000-0000000000%'`);
-        await queryRunner.query(
-            `DELETE FROM user_permissions WHERE user_id LIKE '00000000-0000-4000-8000-0000000000%'`
-        );
+        await queryRunner.query(`DELETE FROM user_permissions WHERE id LIKE '10000000-0000-4000-8000-0000000000%'`);
         await queryRunner.query(`DELETE FROM workspaces WHERE id LIKE '00000000-0000-4000-8000-0000000000%'`);
         await queryRunner.query(`DELETE FROM users WHERE id LIKE '00000000-0000-4000-8000-0000000000%'`);
     }
