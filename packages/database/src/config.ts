@@ -8,7 +8,10 @@ import { AppDataSource } from './dataSource';
  * Merge package default config with app-specific overrides
  */
 export function createDataSourceOptions(repoConfig: RepoConfig): DataSourceOptions {
-    const typeormLogger = new TypeOrmPinoLogger(createBaseLogger(repoConfig));
+    const typeormLogger = new TypeOrmPinoLogger(createBaseLogger(repoConfig), {
+        logQueries: false,
+        logSchemaOperations: false,
+    });
 
     return {
         type: 'mysql',

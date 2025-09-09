@@ -43,12 +43,24 @@ export class BaseDbService<T extends AppEntity> implements DbServiceInterface<T>
         return this.repo.save(entity);
     }
 
+    async saveMany(entities: DeepPartial<T>[]): Promise<T[]> {
+        return this.repo.save(entities);
+    }
+
     async update(id: number | string, data: QueryDeepPartialEntity<T>): Promise<void> {
         await this.repo.update(id, data);
     }
 
     async remove(id: number | string): Promise<void> {
         await this.repo.delete(id);
+    }
+
+    async deleteMany(ids: (number | string)[]): Promise<void> {
+        await this.repo.delete(ids as string[] | number[]);
+    }
+
+    async clearTable(): Promise<void> {
+        await this.repo.clear();
     }
 
     async upsert(entity: QueryDeepPartialEntity<T>, conflictPathsOrOptions: string[]): Promise<void> {
