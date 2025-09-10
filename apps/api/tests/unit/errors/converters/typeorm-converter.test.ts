@@ -3,16 +3,28 @@ import { EntityNotFoundError, QueryFailedError } from 'typeorm';
 import { AppHTTPException } from '../../../../src/errors/AppHTTPException';
 import { convertTypeORMError } from '../../../../src/errors/converters/typeorm-converter';
 
+interface MySqlDriverError extends Error {
+    code?: string;
+    errno?: number;
+    sql?: string;
+    sqlState?: string;
+    sqlMessage?: string;
+}
+
 describe('TypeORM Error Converter', () => {
     describe('QueryFailedError handling', () => {
         it('converts duplicate entry error to 409', () => {
-            const driverError = {
+            const driverError: MySqlDriverError = {
                 name: 'DriverError',
                 code: 'ER_DUP_ENTRY',
                 message: 'Duplicate entry for key',
             };
 
-            const error = new QueryFailedError('INSERT INTO users...', [], driverError);
+            const error = new QueryFailedError<MySqlDriverError>(
+                'INSERT INTO users (name, email) VALUES (?, ?)',
+                [],
+                driverError
+            );
             const result = convertTypeORMError(error);
 
             expect(result).toBeInstanceOf(AppHTTPException);
@@ -21,13 +33,13 @@ describe('TypeORM Error Converter', () => {
         });
 
         it('converts other QueryFailedError to 500', () => {
-            const driverError = {
+            const driverError: MySqlDriverError = {
                 name: 'DriverError',
                 code: 'ER_NO_SUCH_TABLE',
                 message: 'Table does not exist',
             };
 
-            const error = new QueryFailedError('SELECT *...', [], driverError);
+            const error = new QueryFailedError<MySqlDriverError>('SELECT * FROM users WHERE id = ?', [], driverError);
             const result = convertTypeORMError(error);
 
             expect(result).toBeInstanceOf(AppHTTPException);
@@ -36,12 +48,12 @@ describe('TypeORM Error Converter', () => {
         });
 
         it('handles QueryFailedError without driverError code', () => {
-            const driverError = {
+            const driverError: MySqlDriverError = {
                 name: 'DriverError',
                 message: 'Some database error',
             };
 
-            const error = new QueryFailedError('SELECT *...', [], driverError);
+            const error = new QueryFailedError<MySqlDriverError>('SELECT * FROM users WHERE id = ?', [], driverError);
             const result = convertTypeORMError(error);
 
             expect(result).toBeInstanceOf(AppHTTPException);
@@ -49,7 +61,10 @@ describe('TypeORM Error Converter', () => {
         });
 
         it('handles QueryFailedError with null driverError', () => {
-            const error = new QueryFailedError('SELECT *...', [], { name: 'DriverError', message: 'Database error' });
+            const error = new QueryFailedError<MySqlDriverError>('SELECT *...', [], {
+                name: 'DriverError',
+                message: 'Database error',
+            });
             const result = convertTypeORMError(error);
 
             expect(result).toBeInstanceOf(AppHTTPException);
@@ -110,7 +125,10 @@ describe('TypeORM Error Converter', () => {
 
     describe('Edge cases', () => {
         it('handles empty QueryFailedError', () => {
-            const error = new QueryFailedError('', [], { name: 'DriverError', message: 'Empty error' });
+            const error = new QueryFailedError<MySqlDriverError>('', [], {
+                name: 'DriverError',
+                message: 'Empty error',
+            });
             const result = convertTypeORMError(error);
 
             expect(result).toBeInstanceOf(AppHTTPException);

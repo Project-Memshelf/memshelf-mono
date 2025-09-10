@@ -1,11 +1,19 @@
 import { describe, expect, it } from 'bun:test';
-import type { Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { EntityNotFoundError, QueryFailedError } from 'typeorm';
 import { z } from 'zod';
 import { config } from '../../../src/config';
 import { ERROR_CODES } from '../../../src/errors/codes';
 import { errorHandler } from '../../../src/middleware/error-handler';
+import { createTestContext } from '../helpers';
+
+interface MySqlDriverError extends Error {
+    code: string;
+    errno?: number;
+    sql?: string;
+    sqlState?: string;
+    sqlMessage?: string;
+}
 
 // Mock Error classes for testing purposes
 class JsonWebTokenError extends Error {
@@ -20,24 +28,6 @@ class AuthorizationError extends Error {
         super(message);
         this.name = 'AuthorizationError';
     }
-}
-
-function createTestContext() {
-    let response: { body: unknown; status: number } | null = null;
-
-    return {
-        json: (body: unknown, status: number) => {
-            response = { body, status };
-            return new Response();
-        },
-        get: (key: string) => {
-            if (key === 'requestId') {
-                return 'test-request-id';
-            }
-            return undefined;
-        },
-        getLastResponse: () => response,
-    } as unknown as Context & { getLastResponse(): { body: unknown; status: number } | null };
 }
 
 describe('Error Handler', () => {
@@ -123,7 +113,11 @@ describe('Error Handler', () => {
 
     it('handles duplicate entry QueryFailedError as 409', () => {
         const context = createTestContext();
-        const error = new QueryFailedError('query', [], { code: 'ER_DUP_ENTRY' });
+        const error = new QueryFailedError<MySqlDriverError>('query', [], {
+            name: 'DriverError',
+            message: 'Duplicate entry',
+            code: 'ER_DUP_ENTRY',
+        });
 
         errorHandler(error, context);
 
@@ -139,7 +133,11 @@ describe('Error Handler', () => {
 
     it('handles other QueryFailedError as 500', () => {
         const context = createTestContext();
-        const error = new QueryFailedError('query', [], { code: 'SOME_OTHER_ERROR' });
+        const error = new QueryFailedError<MySqlDriverError>('query', [], {
+            name: 'DriverError',
+            message: 'Some other error',
+            code: 'SOME_OTHER_ERROR',
+        });
 
         errorHandler(error, context);
 
