@@ -90,17 +90,19 @@ Jane Designer:  dev_jane_key_abcdef0123456789abcdef0123456789abcdef01
 
 ## Notes Endpoints
 
-### GET /api/v1/notes
+### GET /api/v1/workspaces/{workspaceId}/notes
 List notes in a workspace.
 
+**Parameters:**
+- `workspaceId` (path) - UUID of the workspace
+
 **Query Parameters:**
-- `workspaceId` (required) - UUID of the workspace
 - `page` (optional) - Page number (default: 1)
 - `limit` (optional) - Items per page (default: 10)
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:4001/api/v1/notes?workspaceId=00000000-0000-4000-8000-000000000011" \
+curl -X GET "http://localhost:4001/api/v1/workspaces/00000000-0000-4000-8000-000000000011/notes" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -136,15 +138,16 @@ curl -X GET "http://localhost:4001/api/v1/notes?workspaceId=00000000-0000-4000-8
 ```
 
 **Error Responses:**
-- `400` - workspaceId is required
 - `401` - Authentication required
 - `403` - Forbidden (no workspace access)
+- `404` - Note not found
 
-### GET /api/v1/notes/:id
+### GET /api/v1/workspaces/{workspaceId}/notes/{noteId}
 Retrieve a specific note by ID.
 
 **Parameters:**
-- `id` (path) - UUID of the note
+- `workspaceId` (path) - UUID of the workspace
+- `noteId` (path) - UUID of the note
 
 **Response:**
 ```json
@@ -174,13 +177,15 @@ Retrieve a specific note by ID.
 
 ---
 
-### POST /api/v1/notes
-Create a new note.
+### POST /api/v1/workspaces/{workspaceId}/notes
+Create a new note in a workspace.
+
+**Parameters:**
+- `workspaceId` (path) - UUID of the workspace
 
 **Request Body:**
 ```json
 {
-  "workspaceId": "00000000-0000-4000-8000-000000000011",
   "title": "New Note Title",
   "content": "# Initial Content\n\nNote body here..."
 }
@@ -208,15 +213,16 @@ Create a new note.
 ```
 
 **Error Responses:**
-- `400` - Validation error (missing workspaceId, title, etc.)
+- `400` - Validation error (missing title, etc.)
 - `401` - Authentication required  
 - `403` - Forbidden (no write access to workspace)
 
-### PUT /api/v1/notes/:id
+### PUT /api/v1/workspaces/{workspaceId}/notes/{noteId}
 Update an existing note.
 
 **Parameters:**
-- `id` (path) - UUID of the note
+- `workspaceId` (path) - UUID of the workspace
+- `noteId` (path) - UUID of the note
 
 **Request Body:**
 ```json
@@ -248,11 +254,12 @@ Update an existing note.
 - `403` - Forbidden (no write access)
 - `404` - Note not found
 
-### DELETE /api/v1/notes/:id
+### DELETE /api/v1/workspaces/{workspaceId}/notes/{noteId}
 Soft delete a note.
 
 **Parameters:**
-- `id` (path) - UUID of the note
+- `workspaceId` (path) - UUID of the workspace
+- `noteId` (path) - UUID of the note
 
 **Response:**
 ```
@@ -266,13 +273,16 @@ Soft delete a note.
 
 ---
 
-### GET /api/v1/notes/:noteId/diffs
+### GET /api/v1/workspaces/{workspaceId}/notes/{noteId}/diffs
 List all diffs (version history) for a note.
 
 **Parameters:**
+- `workspaceId` (path) - UUID of the workspace
 - `noteId` (path) - UUID of the note
-- `page` (query) - Page number (default: 1)
-- `limit` (query) - Items per page (default: 10)
+
+**Query Parameters:**
+- `page` (optional) - Page number (default: 1)
+- `limit` (optional) - Items per page (default: 10)
 
 **Response:**
 ```json
@@ -303,10 +313,11 @@ List all diffs (version history) for a note.
 }
 ```
 
-### POST /api/v1/notes/:noteId/diffs
+### POST /api/v1/workspaces/{workspaceId}/notes/{noteId}/diffs
 Apply a diff to update note content and increment version.
 
 **Parameters:**
+- `workspaceId` (path) - UUID of the workspace
 - `noteId` (path) - UUID of the note
 
 **Request Body:**
@@ -489,35 +500,8 @@ Soft delete a workspace.
 
 ## Tags Endpoints
 
-### GET /api/v1/tags
+### GET /api/v1/workspaces/{workspaceId}/tags
 List tags for a specific workspace.
-
-**Query Parameters:**
-- `workspaceId` (required) - UUID of the workspace
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "tag-uuid",
-      "createdAt": "2025-09-06T16:36:03.000Z",
-      "updatedAt": "2025-09-06T16:36:03.000Z",
-      "deletedAt": null,
-      "name": "development",
-      "displayName": "Development"
-    }
-  ],
-  "meta": {
-    "timestamp": "2025-09-07T01:25:00.000Z",
-    "version": "1.0.0"
-  }
-}
-```
-
-### GET /api/v1/workspaces/:workspaceId/tags
-Alternative endpoint to get workspace tags.
 
 **Parameters:**
 - `workspaceId` (path) - UUID of the workspace
@@ -543,7 +527,8 @@ Alternative endpoint to get workspace tags.
 }
 ```
 
-### POST /api/v1/workspaces/:workspaceId/tags
+
+### POST /api/v1/workspaces/{workspaceId}/tags
 Create a new tag in a workspace.
 
 **Parameters:**
@@ -578,10 +563,11 @@ Create a new tag in a workspace.
 
 ## Note-Tags Relationship Endpoints
 
-### GET /api/v1/notes/:noteId/tags
+### GET /api/v1/workspaces/{workspaceId}/notes/{noteId}/tags
 Get all tags associated with a note.
 
 **Parameters:**
+- `workspaceId` (path) - UUID of the workspace
 - `noteId` (path) - UUID of the note
 
 **Response:**
@@ -605,10 +591,11 @@ Get all tags associated with a note.
 }
 ```
 
-### POST /api/v1/notes/:noteId/tags
+### POST /api/v1/workspaces/{workspaceId}/notes/{noteId}/tags
 Add a tag to a note.
 
 **Parameters:**
+- `workspaceId` (path) - UUID of the workspace
 - `noteId` (path) - UUID of the note
 
 **Request Body:**
@@ -633,10 +620,11 @@ Add a tag to a note.
 }
 ```
 
-### DELETE /api/v1/notes/:noteId/tags/:tagId
+### DELETE /api/v1/workspaces/{workspaceId}/notes/{noteId}/tags/:tagId
 Remove a tag from a note.
 
 **Parameters:**
+- `workspaceId` (path) - UUID of the workspace
 - `noteId` (path) - UUID of the note
 - `tagId` (path) - UUID of the tag
 
@@ -649,10 +637,11 @@ Remove a tag from a note.
 
 ## Links Endpoints
 
-### GET /api/v1/notes/:noteId/links
+### GET /api/v1/workspaces/{workspaceId}/notes/{noteId}/links
 Get all links from and to a specific note.
 
 **Parameters:**
+- `workspaceId` (path) - UUID of the workspace
 - `noteId` (path) - UUID of the note
 
 **Response:**
@@ -751,8 +740,7 @@ Public health check endpoint (no authentication required).
 ## Future Features (Planned)
 
 ### Search Endpoints (Not Implemented)
-- Full-text search across notes
-- Meilisearch integration
+- Full-text search across notes using Meilisearch
 - Faceted search with filters
 
 ### User Management (Not Implemented)  
