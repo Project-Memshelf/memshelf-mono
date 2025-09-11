@@ -29,7 +29,7 @@ export class NoteEntity extends AppEntity {
     @ZodProperty(z.string().min(1).max(500))
     title: string;
 
-    @Column({ type: 'longtext', default: '' })
+    @Column({ type: 'text', default: '' })
     @ZodProperty(z.string().default(''))
     content: string;
 

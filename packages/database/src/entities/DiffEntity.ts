@@ -31,7 +31,7 @@ export class DiffEntity extends AppEntity {
     @ZodProperty(z.string().default(''))
     newText: string;
 
-    @Column({ type: 'timestamp', nullable: true })
+    @Column({ type: 'datetime', nullable: true })
     @ZodProperty(z.date().nullable())
     appliedAt: Date | null;
 }
