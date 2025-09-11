@@ -1,12 +1,7 @@
 import { z } from 'zod';
 
 export const DatabaseConfigSchema = z.object({
-    host: z.string(),
-    port: z.number(),
-    username: z.string(),
-    password: z.string(),
-    database: z.string(),
-    logging: z.boolean(),
+    url: z.string().url(),
 });
 
 export type DatabaseConfig = z.infer<typeof DatabaseConfigSchema>;

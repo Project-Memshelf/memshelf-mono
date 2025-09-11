@@ -9,6 +9,7 @@
     "types": "src/index.ts",
     "scripts": {
         "typecheck": "tsc --noEmit",
+        "test": "bun test",
         "migration:create": "bash scripts/create-migration.sh",
         "migration:generate": "bash scripts/generate-migration.sh",
         "migration:show": "bun --bun typeorm migration:show -d src/dataSource.ts",

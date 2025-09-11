@@ -44,12 +44,9 @@ const defaultConfig: DeepPartial<RepoConfig> = {
         isTesting: false,
     },
     database: {
-        host: process.env.DB_HOST ?? 'localhost',
-        port: parseIntWithDefault(process.env.DB_PORT, 3306),
-        username: process.env.DB_USERNAME ?? 'db_username',
-        password: process.env.DB_PASSWORD ?? 'db_password',
-        database: process.env.DB_DATABASE ?? 'db_database',
-        logging: process.env.NODE_ENV === 'development',
+        url:
+            process.env.DATABASE_URL ??
+            'mysql://user:pass@localhost:3306/mydb?synchronize=false&logging=false&timezone=Z&charset=utf8mb4&migrationsRun=true',
     },
     logger: {
         options: {
