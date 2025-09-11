@@ -6,8 +6,8 @@ export const createBaseLogger = (config: RepoConfig) => {
     // Extract user options but handle transport separately for deep merging
     const { transport: userTransport, ...userOptions } = config.logger.options;
 
-    if (config.nodeEnv.isDevelopment) {
-        // Development: Pretty-printed logs to stderr with deep merge for transport options
+    if (config.nodeEnv.isDevelopment || config.nodeEnv.isTesting) {
+        // Development/Test: Pretty-printed logs to stderr with deep merge for transport options
         const defaultTransport = {
             target: 'pino-pretty',
             options: {

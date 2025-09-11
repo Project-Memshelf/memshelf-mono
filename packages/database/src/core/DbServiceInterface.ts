@@ -18,9 +18,15 @@ export interface DbServiceInterface<T extends AppEntity> {
 
     save(entity: DeepPartial<T>): Promise<T>;
 
+    saveMany(entities: DeepPartial<T>[]): Promise<T[]>;
+
     update(id: number | string, data: QueryDeepPartialEntity<T>): Promise<void>;
 
     remove(id: number | string): Promise<void>;
+
+    deleteMany(ids: (number | string)[]): Promise<void>;
+
+    clearTable(): Promise<void>;
 
     upsert(entity: QueryDeepPartialEntity<T>, conflictPathsOrOptions: string[]): Promise<void>;
 

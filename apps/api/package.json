@@ -9,7 +9,7 @@
         "dev": "bun run src/index.ts",
         "typecheck": "tsc --noEmit",
         "prepublishOnly": "bun run build",
-        "test": "bun test"
+        "test": "bun test unit"
     },
     "dependencies": {
         "@repo/database": "*",

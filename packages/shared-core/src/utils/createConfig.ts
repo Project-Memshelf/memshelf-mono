@@ -1,4 +1,3 @@
-import path from 'node:path';
 import dotenv from 'dotenv';
 import { merge } from 'ts-deepmerge';
 import { ZodError } from 'zod';
@@ -9,8 +8,8 @@ import { type DeepPartial, NodeEnv } from '../types';
 // Load environment-specific .env file based on NODE_ENV
 const nodeEnv = process.env.NODE_ENV || 'development';
 const envFiles = [
-    path.resolve(__dirname, `../../.env.${nodeEnv}`), // .env.test, .env.development, etc.
-    path.resolve(__dirname, '../../.env'), // Fallback to default .env
+    `../../.env.${nodeEnv}`, // .env.test, .env.development, etc.
+    '../../.env', // Fallback to default .env
 ];
 
 dotenv.config({
@@ -45,12 +44,9 @@ const defaultConfig: DeepPartial<RepoConfig> = {
         isTesting: false,
     },
     database: {
-        host: process.env.DB_HOST ?? 'localhost',
-        port: parseIntWithDefault(process.env.DB_PORT, 3306),
-        username: process.env.DB_USERNAME ?? 'db_username',
-        password: process.env.DB_PASSWORD ?? 'db_password',
-        database: process.env.DB_DATABASE ?? 'db_database',
-        logging: process.env.NODE_ENV === 'development',
+        url:
+            process.env.DATABASE_URL ??
+            'mysql://user:pass@localhost:3306/mydb?synchronize=false&logging=false&timezone=Z&charset=utf8mb4&migrationsRun=true',
     },
     logger: {
         options: {

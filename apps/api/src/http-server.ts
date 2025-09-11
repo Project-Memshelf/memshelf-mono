@@ -1,4 +1,4 @@
-import type { User } from '@repo/database';
+import type { User, Workspace } from '@repo/database';
 import { AppLogger } from '@repo/shared-services';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -12,6 +12,7 @@ type AppEnv = {
     Variables: {
         requestId: string;
         currentUser?: User;
+        workspace?: Workspace;
     };
 };
 
