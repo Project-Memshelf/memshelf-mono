@@ -17,6 +17,11 @@ export const testUsers = {
         name: 'Jane Designer',
         apiKey: 'dev_jane_key_abcdef0123456789abcdef0123456789abcdef01',
     },
+    jack: {
+        id: '00000000-0000-4000-8000-000000000004',
+        name: 'jack Ripper',
+        apiKey: 'dev_jack_key_abcdef0123456789abcdef0123456789abcdef01',
+    },
 };
 
 export const testWorkspaces = {
@@ -29,6 +34,7 @@ export const testWorkspaces = {
         id: '20000000-0000-4000-8000-000000000002',
         name: 'Design System',
         description: 'Design system documentation and guidelines',
+        createdAt: '2025-09-12T08:30:59.000Z',
     },
     product: {
         id: '20000000-0000-4000-8000-000000000003',

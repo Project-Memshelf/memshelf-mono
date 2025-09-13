@@ -8,7 +8,7 @@ import { errorHandler } from './middleware/error-handler';
 import { appRoutes } from './routes';
 
 // Define the types for your context variables
-type AppEnv = {
+export type AppEnv = {
     Variables: {
         requestId: string;
         currentUser?: User;

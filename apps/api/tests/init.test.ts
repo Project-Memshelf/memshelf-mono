@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'bun:test';
+import { UsersDbService } from '@repo/database';
 import { createRepoConfig } from '@repo/shared-core';
+import { container } from '../src/config';
 import { honoApp } from '../src/http-server';
+import { resetTestData, setupTestDatabase } from './integration/config/database';
 
 describe('testing init', () => {
     describe('env vars', () => {
@@ -14,7 +17,6 @@ describe('testing init', () => {
             expect(config.nodeEnv.isTesting).toBeTrue();
             expect(config.nodeEnv.isDevelopment).toBeFalse();
             expect(String(config.nodeEnv.env)).toBe('test');
-            expect(config.database.port).toBe(8383);
         });
     });
 
@@ -23,6 +25,16 @@ describe('testing init', () => {
             const response = await honoApp.request('/health');
 
             expect(response.status).toBe(200);
+        });
+    });
+
+    describe('db connection', () => {
+        it('can conned to the db', async () => {
+            await setupTestDatabase();
+            await resetTestData();
+            const userService = container.resolve(UsersDbService);
+            const userCount = await userService.count();
+            expect(userCount).toBeGreaterThan(0);
         });
     });
 });

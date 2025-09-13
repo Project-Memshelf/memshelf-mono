@@ -138,13 +138,69 @@ await dataSource.initialize();
 
 ### Environment Variables
 
-The package automatically loads database configuration from environment variables:
+The package uses a single DSN (Data Source Name) string for database configuration:
 
-- `DB_HOST` - Database host (default: localhost)
-- `DB_PORT` - Database port (default: 3306)
-- `DB_USERNAME` - Database username
-- `DB_PASSWORD` - Database password
-- `DB_DATABASE` - Database name
+- `DATABASE_URL` - Database connection DSN string
+
+### DSN Format
+
+The DSN string supports multiple database types with TypeORM configuration via query parameters:
+
+#### MySQL DSN
+```bash
+# Basic MySQL connection
+DATABASE_URL="mysql://username:password@localhost:3306/database_name"
+
+# MySQL with TypeORM configuration
+DATABASE_URL="mysql://username:password@localhost:3306/database_name?synchronize=false&logging=false&timezone=Z&charset=utf8mb4&migrationsRun=true"
+```
+
+#### SQLite DSN
+```bash
+# File-based SQLite
+DATABASE_URL="sqlite:///path/to/database.sqlite?synchronize=false&logging=false&migrationsRun=false"
+
+# In-memory SQLite for testing
+DATABASE_URL="sqlite://:memory:?synchronize=true&logging=false&migrationsRun=false"
+```
+
+#### PostgreSQL DSN
+```bash
+# PostgreSQL connection
+DATABASE_URL="postgres://username:password@localhost:5432/database_name?synchronize=false&logging=false&migrationsRun=false"
+```
+
+### DSN Query Parameters
+
+The following TypeORM configuration parameters can be set via DSN query string:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `synchronize` | boolean | `false` | Automatically synchronize database schema |
+| `logging` | boolean | `false` | Enable TypeORM query logging |
+| `migrationsRun` | boolean | `false` | Automatically run migrations on startup |
+| `timezone` | string | `UTC` | Database timezone (MySQL only) |
+| `charset` | string | `utf8mb4` | Database character set (MySQL only) |
+
+### Configuration Examples
+
+#### Development Environment
+```bash
+# Local development with MySQL
+DATABASE_URL="mysql://devuser:devpass@localhost:3306/memshelf_dev?synchronize=true&logging=true&timezone=Z&charset=utf8mb4&migrationsRun=true"
+```
+
+#### Testing Environment
+```bash
+# Testing with in-memory SQLite
+DATABASE_URL="sqlite://:memory:?synchronize=true&logging=false&migrationsRun=false"
+```
+
+#### Production Environment
+```bash
+# Production MySQL with optimized settings
+DATABASE_URL="mysql://appuser:securepassword@prod-db.example.com:3306/memshelf_prod?synchronize=false&logging=false&timezone=UTC&charset=utf8mb4&migrationsRun=true"
+```
 
 ## Migrations
 
