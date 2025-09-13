@@ -213,19 +213,72 @@ describe('Workspace Endpoints', () => {
     });
 
     describe('Workspace Permissions', () => {
-        it('should only return workspaces user has access to', async () => {
-            // Create workspace as user1
-            const postBody = { name: `User1 Workspace${Date.now()}`, description: 'some description' };
+        it('should prevent user from accessing workspace they have no permissions for', async () => {
+            // Try to access engineering workspace as jack (who has no permissions)
+            const response = await authenticatedRequest(
+                `/api/v1/workspaces/${testWorkspaces.engineering.id}`,
+                undefined,
+                'jack'
+            );
+            await expectErrorResponse(response, 403);
+        });
+
+        it('should prevent user with read-only access from updating workspace', async () => {
+            // Try to update design workspace as jane (who has canWrite: false)
+            const response = await authenticatedRequest(
+                `/api/v1/workspaces/${testWorkspaces.design.id}`,
+                {
+                    method: 'PUT',
+                    body: JSON.stringify({ name: 'Updated Name' }),
+                },
+                'jane'
+            );
+            await expectErrorResponse(response, 403);
+        });
+
+        it('should prevent user with read-only access from deleting workspace', async () => {
+            // Try to delete design workspace as jane (who has canWrite: false)
+            const response = await authenticatedRequest(
+                `/api/v1/workspaces/${testWorkspaces.design.id}`,
+                {
+                    method: 'DELETE',
+                },
+                'jane'
+            );
+            await expectErrorResponse(response, 403);
+        });
+
+        it('should not return deleted workspaces in list', async () => {
+            // Create a workspace
             const createResponse = await authenticatedRequest('/api/v1/workspaces', {
                 method: 'POST',
-                body: JSON.stringify(postBody),
+                body: JSON.stringify({ name: 'Workspace to Delete' }),
             });
-            await expectSuccessResponse(createResponse, 201);
+            const createData = (await expectSuccessResponse(
+                createResponse,
+                201
+            )) as SuccessResponseSingle<WorkspaceEntity>;
+            const workspaceId = createData.data.id;
 
-            // List workspaces - should only see workspaces for this user
-            const response = await authenticatedRequest('/api/v1/workspaces');
-            const responseData = (await expectPaginatedResponse(response)) as SuccessResponsePaginated<WorkspaceEntity>;
-            expect(responseData.data.some((w) => w.name === postBody.name)).toBeTrue();
+            // Verify it appears in list
+            const beforeDeleteResponse = await authenticatedRequest('/api/v1/workspaces');
+            const beforeDeleteData = (await expectPaginatedResponse(
+                beforeDeleteResponse
+            )) as SuccessResponsePaginated<WorkspaceEntity>;
+            expect(beforeDeleteData.data.some((w) => w.id === workspaceId)).toBeTrue();
+
+            // Delete it
+            const deleteResponse = await authenticatedRequest(`/api/v1/workspaces/${workspaceId}`, {
+                method: 'DELETE',
+            });
+            expect(deleteResponse.status).toBe(204);
+
+            // Verify it no longer appears in list
+            const afterDeleteResponse = await authenticatedRequest('/api/v1/workspaces');
+            const afterDeleteData = (await expectPaginatedResponse(
+                afterDeleteResponse
+            )) as SuccessResponsePaginated<WorkspaceEntity>;
+            expect(afterDeleteData.data.some((w) => w.id === workspaceId)).toBeFalse();
         });
     });
 });
