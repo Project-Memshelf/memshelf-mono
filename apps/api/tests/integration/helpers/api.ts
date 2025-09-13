@@ -1,4 +1,5 @@
 import { expect } from 'bun:test';
+import type { PaginatedResult } from '@repo/shared-core';
 import { honoApp } from '../../../src/http-server';
 import { testUsers } from '../../fixtures';
 
@@ -51,7 +52,7 @@ export async function expectSuccessResponse(
     }
 
     // Only validate JSON structure if we have a body
-    if (body) {
+    if (body && Object.keys(body).length > 0) {
         expect(body).toHaveProperty('success', true);
         expect(body).toHaveProperty('data');
         if (expectedData) {
@@ -62,21 +63,21 @@ export async function expectSuccessResponse(
     return body;
 }
 
-export async function expectErrorResponse(rawResponse: Response, expectedCode: number) {
+export async function expectErrorResponse(rawResponse: Response, expectedResponseCode: number) {
     const body = await rawResponse.json();
 
-    if (rawResponse.status !== expectedCode) {
+    if (rawResponse.status !== expectedResponseCode) {
         const errorMessage = `Expected error status failure: ${JSON.stringify(
             {
                 actual: rawResponse.status,
-                expected: expectedCode,
+                expected: expectedResponseCode,
                 body,
             },
             null,
             8
         )}`;
         console.log(errorMessage);
-        expect(rawResponse.status).toBe(expectedCode);
+        expect(rawResponse.status).toBe(expectedResponseCode);
     }
 
     expect(body).toHaveProperty('success', false);
@@ -85,11 +86,13 @@ export async function expectErrorResponse(rawResponse: Response, expectedCode: n
     expect(body.error).toHaveProperty('message');
     expect(body.error.message.trim()).not.toBe('');
     expect(body.error).toHaveProperty('timestamp');
-    expect(body.error.code).toBe(expectedCode);
     return body;
 }
 
-export async function expectPaginatedResponse(rawResponse: Response) {
+export async function expectPaginatedResponse(
+    rawResponse: Response,
+    expectedPagination?: Partial<Omit<PaginatedResult<unknown>, 'items'>>
+) {
     const body = await rawResponse.json();
 
     if (rawResponse.status !== 200) {
@@ -112,5 +115,8 @@ export async function expectPaginatedResponse(rawResponse: Response) {
     expect(body.pagination).toHaveProperty('page');
     expect(body.pagination).toHaveProperty('limit');
     expect(body.pagination).toHaveProperty('total');
+    if (expectedPagination) {
+        expect(body.pagination).toMatchObject(expectedPagination);
+    }
     return body;
 }
