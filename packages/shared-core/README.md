@@ -48,12 +48,7 @@ import { DatabaseConfig, LoggerConfig, RepoConfig } from '@repo/shared-core';
 
 // Database configuration
 interface DatabaseConfig {
-    host: string;
-    port: number;
-    username: string;
-    password: string;
-    database: string;
-    logging: boolean;
+    url: string;
 }
 
 // Logger configuration
@@ -111,11 +106,11 @@ const config = createRepoConfig({
         }
     },
     database: {
-        host: 'custom-host' // Override environment variable
+        url: 'mysql://user:pass@localhost:3306/custom_db' // Override environment variable
     }
 });
 
-console.log(config.database.host); // From DB_HOST env var
+console.log(config.database.url); // From DATABASE_URL env var or override
 console.log(config.logger.name); // 'my-app'
 ```
 
@@ -127,11 +122,7 @@ The configuration system automatically loads these environment variables:
 - `NODE_ENV`: Environment (development, production, test)
 
 **Database Configuration:**
-- `DB_HOST`: Database host (default: localhost)
-- `DB_PORT`: Database port (default: 3306)
-- `DB_USERNAME`: Database username (default: db_username)
-- `DB_PASSWORD`: Database password (default: db_password)
-- `DB_DATABASE`: Database name (default: db_database)
+- `DATABASE_URL`: Database connection DSN string (default: mysql://user:pass@localhost:3306/mydb?synchronize=false&logging=false&timezone=Z&charset=utf8mb4&migrationsRun=true)
 
 **Redis Configuration:**
 - `REDIS_HOST`: Redis host (default: localhost)
@@ -165,12 +156,7 @@ import { DatabaseConfigSchema, LoggerConfigSchema } from '@repo/shared-core';
 
 // Validate database configuration
 const databaseConfig = DatabaseConfigSchema.parse({
-    host: 'localhost',
-    port: 3306,
-    username: 'memshelf',
-    password: 'memshelf',
-    database: 'memshelf',
-    logging: true
+    url: 'mysql://memshelf:memshelf@localhost:3306/memshelf?synchronize=true&logging=false'
 });
 
 // Validate logger configuration
@@ -263,13 +249,7 @@ const config = createRepoConfig({
 const logger = createBaseLogger(config.logger.options);
 
 // Use database configuration
-const dataSource = new DataSource({
-    host: config.database.host,
-    port: config.database.port,
-    username: config.database.username,
-    password: config.database.password,
-    database: config.database.database
-});
+const dataSource = new DataSource(config.database.url);
 
 // Use API server configuration
 const server = serve({
@@ -279,7 +259,7 @@ const server = serve({
 });
 
 logger.info('Application started', { 
-    database: config.database.database,
+    database: config.database.url,
     apiServer: { hostname: config.apiServer.hostname, port: config.apiServer.port }
 });
 ```

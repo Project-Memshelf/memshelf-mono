@@ -1,3 +1,4 @@
+import type { FindOptionsWhere } from 'typeorm';
 import { z } from 'zod';
 
 // Zod validation schemas for runtime type checking
@@ -25,7 +26,7 @@ export const PaginatedResultSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
 export type PaginationOptions<T = Record<string, unknown>> = {
     page?: number;
     limit?: number;
-    where?: Partial<T>;
+    where?: FindOptionsWhere<T>;
     order?: Record<string, 'ASC' | 'DESC'>;
     relations?: string[];
 };

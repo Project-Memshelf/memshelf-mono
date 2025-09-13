@@ -14,7 +14,7 @@ export class WorkspaceEntity extends AppEntity {
     name: string;
 
     @Column({ type: 'text', nullable: true })
-    @ZodProperty(z.string().max(1000).nullable())
+    @ZodProperty(z.string().max(1000).optional().nullable())
     description: string | null;
 
     @OneToMany(

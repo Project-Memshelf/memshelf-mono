@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'bun:test';
+import { beforeAll, beforeEach, describe, it } from 'bun:test';
 import { honoApp } from '../../src/http-server';
 import { resetTestData, setupTestDatabase } from './config/database';
 import { authenticatedRequest, expectErrorResponse, expectSuccessResponse } from './helpers/api';
@@ -16,8 +16,7 @@ describe('API Authentication', () => {
         it('should accept valid API key', async () => {
             const response = await authenticatedRequest('/api/v1/workspaces');
 
-            expect(response.status).toBe(200);
-            await expectSuccessResponse(response);
+            await expectSuccessResponse(response, 200);
         });
 
         it('should reject request without Authorization header', async () => {
@@ -47,20 +46,21 @@ describe('API Authentication', () => {
                 headers: { Authorization: 'InvalidFormat dev_admin_key_0123456789abcdef0123456789abcdef01234567' },
             });
 
-            expect(response.status).toBe(400);
             await expectErrorResponse(response, 400);
         });
 
         it('should work with different user types', async () => {
             // Test with john user
             const johnResponse = await authenticatedRequest('/api/v1/workspaces', {}, 'john');
-            expect(johnResponse.status).toBe(200);
-            await expectSuccessResponse(johnResponse);
+            await expectSuccessResponse(johnResponse, 200);
 
             // Test with jane user
             const janeResponse = await authenticatedRequest('/api/v1/workspaces', {}, 'jane');
-            expect(janeResponse.status).toBe(200);
-            await expectSuccessResponse(janeResponse);
+            await expectSuccessResponse(janeResponse, 200);
+
+            // Test with jack user (no workspace permissions)
+            const jackResponse = await authenticatedRequest('/api/v1/workspaces', {}, 'jack');
+            await expectErrorResponse(jackResponse, 403);
         });
     });
 });
