@@ -111,11 +111,11 @@ export abstract class BaseController<Entity extends AppEntity = AppEntity> {
     protected async findByContextOrFail(context: Context<AppEnv>): Promise<{ id: string | number; entity: Entity }> {
         const { id } = context.req.param();
         if (!id) {
-            throw new HTTPException(404);
+            throw new HTTPException(404, { message: 'Entity id parameter is missing' });
         }
         const entity = await this.dbService.findById(id);
         if (!entity) {
-            throw new HTTPException(404);
+            throw new HTTPException(404, { message: `Entity with id ${id} not found` });
         }
         return { id, entity };
     }

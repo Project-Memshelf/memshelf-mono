@@ -57,6 +57,10 @@ describe('API Authentication', () => {
             // Test with jane user
             const janeResponse = await authenticatedRequest('/api/v1/workspaces', {}, 'jane');
             await expectSuccessResponse(janeResponse, 200);
+
+            // Test with jack user (no workspace permissions)
+            const jackResponse = await authenticatedRequest('/api/v1/workspaces', {}, 'jack');
+            await expectErrorResponse(jackResponse, 403);
         });
     });
 });
