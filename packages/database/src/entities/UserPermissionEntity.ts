@@ -1,14 +1,15 @@
 import { ZodProperty } from '@repo/typeorm-zod';
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn, type Relation } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, type Relation, Unique } from 'typeorm';
 import { z } from 'zod';
 import { AppEntity } from '../core/AppEntity';
 import { UserEntity } from './UserEntity';
 import { WorkspaceEntity } from './WorkspaceEntity';
 
 @Entity()
+@Unique(['userId', 'workspaceId'])
 export class UserPermissionEntity extends AppEntity {
-    @PrimaryColumn('uuid')
     @ZodProperty(z.string().uuid())
+    @Column({ type: 'uuid' })
     userId: string;
 
     @ManyToOne(
@@ -21,8 +22,8 @@ export class UserPermissionEntity extends AppEntity {
     @JoinColumn({ name: 'user_id' })
     user: Relation<UserEntity>;
 
-    @PrimaryColumn('uuid')
     @ZodProperty(z.string().uuid())
+    @Column({ type: 'uuid' })
     workspaceId: string;
 
     @ManyToOne(

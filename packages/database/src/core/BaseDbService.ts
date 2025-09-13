@@ -47,8 +47,9 @@ export class BaseDbService<T extends AppEntity> implements DbServiceInterface<T>
         return this.repo.save(entities);
     }
 
-    async update(id: number | string, data: QueryDeepPartialEntity<T>): Promise<void> {
-        await this.repo.update(id, data);
+    async update(mergeIntoEntity: T, ...entityLikes: DeepPartial<T>[]): Promise<T> {
+        const merged = this.repo.merge(mergeIntoEntity, ...entityLikes);
+        return this.repo.save(merged);
     }
 
     async remove(id: number | string): Promise<void> {
